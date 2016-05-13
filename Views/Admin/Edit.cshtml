@@ -1,0 +1,77 @@
+﻿@model Cascade.Booking.ViewModels.BookingDetailsViewModel
+@using Orchard.Mvc.Html;
+@using Cascade.Booking.Extensions;
+@using Orchard.Utility.Extensions;
+@{
+    Style.Require("jQueryUI");
+    Script.Require("ShapesBase");
+    Script.Require("jQueryUI_DatePicker");
+
+    Layout.Title = T("Edit booking - '").ToString() + Model.Name + "'";
+}
+
+
+@using (Html.BeginFormAntiForgeryPost())
+{
+    @Html.ValidationSummary()
+    <fieldset>
+        @Html.HiddenFor(m => m.Id)
+        @Html.LabelFor(m => m.Name, T("Name"))
+        @Html.TextBoxFor(m => m.Name, new { @class = "text large", autofocus="autofocus" })
+
+        @Html.LabelFor(m => m.Year, T("Year"))
+        @Html.EditorFor(m => m.Year)
+
+        @Html.LabelFor(m => m.BookingState, T("Booking State"))
+        @Html.EnumDropDownListFor(m => m.BookingState)
+    </fieldset>
+    <fieldset>
+        <table class="table items">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Category</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Per Night</th>
+                    <th>Total</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody class="booking-guests">
+                @Html.EditorFor(m => m.Guests)
+            </tbody>
+        </table>
+    </fieldset>
+    <fieldset class="action">
+        <button id="addGuest" type="button">@T("Add guest")</button>
+        <button class="primaryAction" type="submit" value="Save">@T("Save Booking")</button>
+    </fieldset>
+}
+@using (Script.Foot())
+{
+    <script type="text/javascript">
+//<![CDATA[
+    $(function () {
+        $("#addGuest").click(function () {
+            $.ajax({
+                url: '@Url.Action("GetNewGuest")',
+                data: { sequence: $('.booking-guests tr').length },
+                success: function (data) {
+                    $(".booking-guests").append(data);
+                    $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yyyy" });
+                    $(".booking-guests tr:last-of-type td:first-of-type input[type='text']").focus();
+                }
+            });
+        });
+        //$(".booking-guests").on("click", "a.deleteRow", function () {
+        //    $(this).parents("tr").remove();
+        //    return false;
+        //});
+        $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yyyy" });
+    })
+    //]]>
+    </script>
+
+}

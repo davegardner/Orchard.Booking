@@ -1,0 +1,49 @@
+﻿@model Cascade.Booking.ViewModels.SeasonDetailsViewModel
+@using Orchard.Mvc.Html;
+@using Orchard.Utility.Extensions;
+@{
+    Style.Require("jQueryUI");
+    Script.Require("ShapesBase");
+    Style.Require("BookingAdmin");
+    Script.Require("jQueryUI_DatePicker");
+    Script.Require("CascadeBooking");
+
+    Layout.Title = T("Edit Season - '").ToString() + Model.Title+ "'";
+}
+
+
+@using (Html.BeginFormAntiForgeryPost())
+{
+    @Html.ValidationSummary()
+    <fieldset>
+        @Html.HiddenFor(m => m.Id)
+        @Html.LabelFor(m => m.Title, T("Title"))
+        @Html.TextBoxFor(m => m.Title, new { @class = "text large", autofocus="autofocus" })
+
+        @Html.LabelFor(m => m.From, T("From"))
+        @Html.EditorFor(m => m.From)
+
+        @Html.LabelFor(m => m.To, T("To"))
+        @Html.EditorFor(m => m.To)
+
+        @Html.LabelFor(m => m.Rate, T("Rate"))
+        @Html.EditorFor(m => m.Rate)
+    </fieldset>
+    <fieldset class="action">
+        <button class="primaryAction" type="submit" value="Save">@T("Save Season")</button>
+    </fieldset>
+}
+
+@using (Script.Foot())
+{
+    <script type="text/javascript">
+//<![CDATA[
+    $(function () {
+        $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yyyy" });
+    })
+    //]]>
+    </script>
+}
+
+
+

@@ -1,0 +1,25 @@
+﻿@model Cascade.Poll.ViewModels.PollHolderViewModel
+@using Cascade.Poll.Models
+
+<fieldset>
+    <div class="editor-label">
+        @Html.LabelFor(model => model.PollId)
+    </div>
+    <div class="editor-field">
+        @*// WHY DO I NEED TO ADD TH DISCRIMINATOIR?????*@
+        <select name="PollWidget.@Html.NameOf(m=>m.PollId)">
+            @foreach (PollRecord poll in Model.Polls)
+            {
+                if (poll.Id == Model.PollId)
+                {
+                    <option selected value="@poll.Id">@poll.Question</option>
+                }
+                else
+                {
+                    <option value="@poll.Id">@poll.Question</option>
+                }
+            }
+        </select>
+        @Html.ValidationMessageFor(model => model.PollId)
+    </div>
+</fieldset>

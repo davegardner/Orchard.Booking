@@ -1,0 +1,42 @@
+﻿@model Cascade.Booking.Models.Guest
+@{ 
+    // Hack to provide a prefix when this template is used to add a new guest
+    // (as opposed to its normal use in rendering a list of guests)
+    var id = Html.NameFor(m => m.Id).ToString();
+    string prefix = String.Empty;
+    if(!id.StartsWith("Guests")){
+        var sequence = Model.Sequence;
+        prefix = "Guests[" + sequence + "].";
+    }
+
+    
+ 
+}
+<tr>
+    <td>
+        <input type="hidden" value="@Model.Id" name='@prefix@Html.NameFor(m=>m.Id)' />
+        <input type="text" value="@Model.FirstName" name='@prefix@Html.NameFor(m=>m.FirstName)'/>
+    </td>
+    <td>
+        <input type="text" value="@Model.LastName" name='@prefix@Html.NameFor(m=>m.LastName)' />
+    </td>
+    <td>
+        <input type="text" value="@Model.Category" name='@prefix@Html.NameFor(m=>m.Category)' />
+    </td>
+    <td>
+        <input type="datetime" value="@Model.From" name='@prefix@Html.NameFor(m=>m.From)' />
+    </td>
+    <td>
+        <input type="datetime" value="@Model.To" name='@prefix@Html.NameFor(m=>m.To)' />
+    </td>
+    <td>
+        <input type="text" value="@Model.CostPerNight.ToString()" name='@prefix@Html.NameFor(m=>m.CostPerNight)' />
+    </td>
+    <td>
+        <input type="text" value="@Model.TotalCost.ToString()" name='@prefix@Html.NameFor(m=>m.TotalCost)' />
+    </td>
+    <td>
+        <input type="checkbox" value="true" @(Model.Deleted ? "checked" : "") name='@prefix@Html.NameFor(m=>m.Deleted)' />
+    </td>
+</tr>
+

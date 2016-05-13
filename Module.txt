@@ -1,0 +1,10 @@
+﻿Name: Cascade.Booking
+AntiForgery: enabled
+Author: Dave Gardner, Cascade Pixels
+Website: http://cascadepixels.com.au
+Version: 0.1
+OrchardVersion: 1.10
+Description: Records and displays bookings by Users
+Features:
+    Cascade.Booking:
+        Description: Records and displays bookings by Users

@@ -1,0 +1,70 @@
+﻿@model Cascade.Booking.ViewModels.SeasonIndexViewModel
+
+@using Orchard.Mvc.Html;
+@using Orchard.Utility.Extensions;
+@using Cascade.Booking.Extensions;
+@using Cascade.Booking.ViewModels;
+@using Cascade.Booking.Models;
+
+@{
+    Style.Require("Admin");
+    Script.Require("ShapesBase");
+
+    Layout.Title = T("Seasons").ToString();
+}
+
+@Html.ValidationSummary()
+@using (Html.BeginFormAntiForgeryPost())
+{
+    <fieldset class="bulk-actions">
+        <label for="publishActions">@T("Actions:")</label>
+        @Html.EnumDropDownList(Html.NameOf(m => m.Options.BulkAction), Model.Options.BulkAction)
+        <button type="submit" name="submit.BulkEdit" value="@T("Apply")">@T("Apply")</button>
+    </fieldset>
+    <fieldset class="bulk-actions">
+        @Html.EnumDropDownList(Html.NameOf(m => m.Options.Filter), Model.Options.Filter)
+        <button type="submit" name="submit.BulkFilter" value="@T("Filter")">@T("Filter")</button>
+    </fieldset>
+
+    <div class="manage">@Html.ActionLink(T("Add a Season").ToString(), "Create", new { }, new { @class = "button primaryAction" })</div>
+
+    <fieldset>
+        <table class="items" summary="@T("This is a table of the booking seasons")">
+            <thead>
+                <tr>
+                    <th scope="col">&nbsp;&darr;</th>
+                    <th scope="col">@T("Title")</th>
+                    <th scope="col">@T("From")</th>
+                    <th scope="col">@T("To")</th>
+                    <th scope="col">@T("Rate")</th>
+                    <th scope="col" style="width:20px">@T("Action")</th>
+                </tr>
+            </thead>
+            @{var seasonIndex = 0;}
+            @foreach (var season in Model.Seasons)
+            {
+                var seasonClass = "";
+                <tr itemscope itemid="@season.Part.Id" itemtype="http://orchardproject.net/data/Season" class="@seasonClass">
+                    <td>
+                        <input type="hidden" value="@season.Part.Id" name="@Html.NameOf(m => m.Seasons[seasonIndex].Part.Id)" />
+                        <input type="checkbox" value="true" name="@Html.NameOf(m => m.Seasons[seasonIndex].IsChecked)" />
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Edit", new { season.Part.Id })" title="@season.Part.Title">@season.Part.Title</a>
+                    </td>
+                    <td>@season.Part.From.ToShortDateString()</td>
+                    <td>@season.Part.To.ToShortDateString()</td>
+                    <td>@season.Part.Rate.ToString()</td>
+                    <td>
+                        <div class="actions">
+                            <a href="@Url.Action("Edit", new { season.Part.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")
+                            <a href="@Url.Action("Delete", new { season.Part.Id, returnUrl = ViewContext.RequestContext.HttpContext.Request.ToUrlString() })" itemprop="RemoveUrl UnsafeUrl">@T("Delete")</a>
+                        </div>
+                    </td>
+                </tr>
+                seasonIndex = seasonIndex + 1;
+            }
+        </table>
+        @Display(Model.Pager)
+    </fieldset>
+}

@@ -1,0 +1,10 @@
+﻿@{
+    Style.Require("Poll");
+}
+<div class="poll-container">
+@if(Model.Poll==null) {
+    <span>@T("No poll selected")</span>
+} else {
+    <span>@T("Poll question"): @Model.Poll.Question</span>
+}
+</div>

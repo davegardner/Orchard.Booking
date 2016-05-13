@@ -1,0 +1,68 @@
+﻿@model Cascade.Booking.ViewModels.BookingIndexViewModel
+
+@using Orchard.Mvc.Html;
+@using Orchard.Utility.Extensions;
+@using Cascade.Booking.Extensions;
+@using Cascade.Booking.ViewModels;
+@using Cascade.Booking.Models;
+
+@{
+    Style.Require("Admin");
+    Script.Require("ShapesBase");
+
+    Layout.Title = T("Bookings").ToString();
+}
+
+@Html.ValidationSummary()
+@using (Html.BeginFormAntiForgeryPost())
+{ 
+    <fieldset class="bulk-actions">
+        <label for="publishActions">@T("Actions:")</label>
+        @Html.EnumDropDownList(Html.NameOf(m=>m.Options.BulkAction), Model.Options.BulkAction)
+        <button type="submit" name="submit.BulkEdit" value="@T("Apply")">@T("Apply")</button>
+    </fieldset>
+    <fieldset class="bulk-actions">
+        @Html.EnumDropDownList(Html.NameOf(m=>m.Options.Filter), Model.Options.Filter)
+        <button type="submit" name="submit.BulkFilter"value="@T("Filter")">@T("Filter")</button>
+    </fieldset>
+
+    <div class="manage">@Html.ActionLink(T("Add a booking").ToString(), "Create", new { }, new { @class = "button primaryAction" })</div>
+
+    <fieldset>
+        <table class="items" summary="@T("This is a table of the bookings in your application")">
+            <thead>
+                <tr>
+                    <th scope="col">&nbsp;&darr;</th>
+                    <th scope="col">@T("Name")</th>
+                    <th scope="col">@T("Number of Guests")</th>
+                    <th scope="col">@T("Season")</th>
+                    <th scope="col" style="width:20px">@T("Action")</th>
+            </thead>
+            @{var bookingIndex = 0;}
+            @foreach (var booking in Model.Bookings)
+            {
+                var bookingClass = "";
+                IEnumerable<Guest> guests = booking.Part.Guests;
+                <tr itemscope itemid="@booking.Part.Id" itemtype="http://orchardproject.net/data/Poll" class="@bookingClass">
+                    <td>
+                        <input type="hidden" value="@booking.Part.Id" name="@Html.NameOf(m => m.Bookings[bookingIndex].Part.Id)"/>
+                        <input type="checkbox" value="true" name="@Html.NameOf(m => m.Bookings[bookingIndex].IsChecked)"/>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Edit", new { booking.Part.Id })" title="@booking.Part.Name">@booking.Part.Name</a>
+                    </td>
+                    <td>@guests.Count().ToString()</td>
+                    <td>@booking.Part.Year</td>
+                    <td>
+                        <div class="actions">
+                            <a href="@Url.Action("Edit", new { booking.Part.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")
+                            <a href="@Url.Action("Delete", new { booking.Part.Id, returnUrl = ViewContext.RequestContext.HttpContext.Request.ToUrlString() })" itemprop="RemoveUrl UnsafeUrl">@T("Delete")</a>
+                        </div>
+                    </td>
+                </tr>
+                bookingIndex = bookingIndex + 1;
+            }
+        </table>
+        @Display(Model.Pager)
+    </fieldset>
+}
