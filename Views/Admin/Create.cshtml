@@ -61,7 +61,7 @@
                 data: { sequence: $('.booking-guests tr').length },
                 success: function (data) {
                     $(".booking-guests").append(data);
-                    $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yyyy" });
+                    $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yy" });
                     $(".booking-guests tr:last-of-type td:first-of-type input[type='text']").focus();
                 }
             });
@@ -70,7 +70,7 @@
         //    $(this).parents("tr").remove();
         //    return false;
         //});
-        $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yyyy" });
+        $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yy" });
     })
     //]]>
 </script>

@@ -3,9 +3,13 @@ using Cascade.Booking.Services;
 using Cascade.Booking.ViewModels;
 using Orchard;
 using Orchard.ContentManagement;
+using Orchard.Core.Common.ViewModels;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
+using Orchard.Localization.Models;
+using Orchard.Localization.Services;
 using Orchard.Logging;
+using Orchard.Services;
 using Orchard.Settings;
 using Orchard.UI.Navigation;
 using Orchard.UI.Notify;
@@ -13,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
+
 
 namespace Cascade.Booking.Controllers
 {
@@ -24,8 +29,10 @@ namespace Cascade.Booking.Controllers
         private readonly ISiteService ss;
         dynamic Shape { get; set; }
         private readonly IContentManager cm;
+        private readonly IDateLocalizationServices dls;
+        private readonly IClock clock;
 
-        public AdminController(IOrchardServices services, IContentManager contentManager, IBookingService bookingService, ISiteService siteService, IShapeFactory shapeFactory)
+        public AdminController(IOrchardServices services, IContentManager contentManager, IBookingService bookingService, ISiteService siteService, IShapeFactory shapeFactory, IDateLocalizationServices _dateLocalizationServices, IClock orchardClock)
         {
             Services = services;
             T = NullLocalizer.Instance;
@@ -34,6 +41,8 @@ namespace Cascade.Booking.Controllers
             ss = siteService;
             Shape = shapeFactory;
             cm = contentManager;
+            dls = _dateLocalizationServices;
+            clock = orchardClock;
         }
 
         public Localizer T { get; set; }
@@ -109,11 +118,17 @@ namespace Cascade.Booking.Controllers
             {
                 case BookingBulkFilter.All:
                     break;
-                case BookingBulkFilter.Open:
-                    bookings = bookings.Where(p => p.BookingState != BookingState.Cancelled);
+                case BookingBulkFilter.Tentative:
+                    bookings = bookings.Where(p => p.BookingState == BookingState.Tentative);
                     break;
-                case BookingBulkFilter.Closed:
+                case BookingBulkFilter.Firm:
+                    bookings = bookings.Where(p => p.BookingState == BookingState.Firm);
+                    break;
+                case BookingBulkFilter.Cancelled:
                     bookings = bookings.Where(p => p.BookingState == BookingState.Cancelled);
+                    break;
+                case BookingBulkFilter.Standby:
+                    bookings = bookings.Where(p => p.BookingState == BookingState.Standby);
                     break;
             }
 
@@ -142,7 +157,7 @@ namespace Cascade.Booking.Controllers
         {
             var bookingVm = new BookingDetailsViewModel
             {
-                Year = DateTime.Now.Year
+                Year = clock.UtcNow.Year
             };
             return View(bookingVm);
         }
@@ -150,16 +165,12 @@ namespace Cascade.Booking.Controllers
         [HttpPost]
         public ActionResult Create(BookingDetailsViewModel bookingVm)
         {
-            if (ProcessBookingPersistence(bookingVm))
+            if (PersistBooking(bookingVm))
             {
                 Services.Notifier.Information(T("New Booking saved."));
-                return View(bookingVm);
-                //return RedirectToAction("Index");
+                //return View(bookingVm);
+                return RedirectToAction("Index");
             }
-            //booking.StartDate.ShowDate = true;
-            //booking.StartDate.ShowTime = false;
-            //booking.EndDate.ShowDate = true;
-            //booking.EndDate.ShowTime = false;
 
             return View(bookingVm);
         }
@@ -181,54 +192,23 @@ namespace Cascade.Booking.Controllers
             var bookingVm = new BookingDetailsViewModel
             {
                 Id = booking.Id,
-                //MaxAnswers = booking.MaxAnswers,
-                //PollState = booking.PollState,
-                //Question = booking.Question,
-                //StartDate = new DateTimeEditor
-                //{
-                //    Date = _dateLocalizationServices.ConvertToLocalizedDateString(booking.StartDate),
-                //    ShowDate = true,
-                //    ShowTime = false
-                //},
-                //EndDate = new DateTimeEditor
-                //{
-                //    Date = _dateLocalizationServices.ConvertToLocalizedDateString(booking.EndDate),
-                //    ShowDate = true,
-                //    ShowTime = false
-                //}
-
                 Name = booking.Name,
                 Year = booking.Year,
-                Guests = booking.Guests,
+                Guests = booking.Guests.Select(g => ConvertToGuestVm(g)).ToList(),
                 BookingState = booking.BookingState
             };
-            //foreach (var answer in booking.Answers)
-            //{
-            //    var answerModel = new PollAnswerViewModel
-            //    {
-            //        Id = answer.Id,
-            //        Answer = answer.Answer,
-            //        Votes = answer.Votes
-            //    };
-            //    bookingDetailsViewModel.Answers.Add(answerModel);
-            //}
             return View(bookingVm);
         }
 
         [HttpPost]
         public ActionResult Edit(BookingDetailsViewModel bookingVm)
         {
-            if (ProcessBookingPersistence(bookingVm))
+            if (PersistBooking(bookingVm))
             {
                 Services.Notifier.Information(T("Changes to Booking saved."));
-                return View(bookingVm);
-                //return RedirectToAction("Index");
+                //return View(bookingVm);
+                return RedirectToAction("Index");
             }
-            //booking.StartDate.ShowDate = true;
-            //booking.StartDate.ShowTime = false;
-            //booking.EndDate.ShowDate = true;
-            //booking.EndDate.ShowTime = false;
-
             return View(bookingVm);
         }
 
@@ -237,18 +217,18 @@ namespace Cascade.Booking.Controllers
 
         public ActionResult GetNewGuest(int sequence)
         {
-            return PartialView("EditorTemplates/Guest", new Guest
+            return PartialView("EditorTemplates/GuestVm", new GuestVm
             {
                 Sequence = sequence,
-                From = DateTime.Now,
-                To = DateTime.Now + new TimeSpan(1, 0, 0, 0),
+                From = dls.ConvertToLocalizedDateString(clock.UtcNow),
+                To = dls.ConvertToLocalizedDateString(clock.UtcNow + new TimeSpan(1, 0, 0, 0)),
                 Category = GuestCategory.Adult
             });
         }
 
         /////////////////// HELPERS ///////////////////////
 
-        private bool ProcessBookingPersistence(BookingDetailsViewModel bookingVm)
+        private bool PersistBooking(BookingDetailsViewModel bookingVm)
         {
             if (ModelState.IsValid)
             {
@@ -256,13 +236,44 @@ namespace Cascade.Booking.Controllers
                 bookingPart.BookingState = bookingVm.BookingState;
                 bookingPart.Name = bookingVm.Name;
                 bookingPart.Year = bookingVm.Year;
-
-                bookingPart.Guests = bookingVm.Guests == null ? null : bookingVm.Guests.Where(g => !g.Deleted);
-
+                bookingPart.Guests = bookingVm.Guests == null ? null : bookingVm.Guests.Where(g => !g.Deleted).Select(g => ConvertToGuest(g)).ToList();
                 bs.SaveOrUpdate(bookingPart);
             }
             return ModelState.IsValid;
         }
 
+        private GuestVm ConvertToGuestVm(Guest guest)
+        {
+            var result = new GuestVm
+            {
+                Id = guest.Id,
+                Sequence = 0,
+                Deleted = false,
+                LastName = guest.LastName,
+                FirstName = guest.FirstName,
+                Category = guest.Category,
+                From = guest.From,
+                To = guest.To,
+                CostPerNight = guest.CostPerNight
+            };
+            return result;
+        }
+
+        private Guest ConvertToGuest(GuestVm guest)
+        {
+            var result = new Guest
+            {
+                Id = guest.Id,
+                Sequence = 0,
+                Deleted = false,
+                LastName = guest.LastName,
+                FirstName = guest.FirstName,
+                Category = guest.Category,
+                From = guest.From,
+                To = guest.To,
+                CostPerNight = guest.CostPerNight
+            };
+            return result;
+        }
     }
 }

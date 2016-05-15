@@ -12,23 +12,28 @@ namespace Cascade.Booking.Models
         private const char RecordBreak = '\r';
 
         public int Id { get; set; }
-        public int Sequence{ get; set; }    // not persisted
+        public int Sequence { get; set; }    // not persisted
         public bool Deleted { get; set; }   // not persisted
-        public string LastName{ get; set; }
+        public string LastName { get; set; }
         public string FirstName { get; set; }
         public GuestCategory Category { get; set; }
-        public DateTime From { get; set; }
-        public DateTime To { get; set; }
+        public string From { get; set; }
+        public string To { get; set; }
         public Decimal CostPerNight { get; set; }
-        public Decimal TotalCost {
-            get{ return CostPerNight * NumberOfNights; }
+        public Decimal? TotalCost
+        {
+            get { return CostPerNight * NumberOfNights; }
         }
 
-        public int NumberOfNights
+        public int? NumberOfNights
         {
             get
             {
-                return Convert.ToInt32(Math.Round((To.Date - From.Date).TotalDays, 0));
+                if (String.IsNullOrWhiteSpace(From) || String.IsNullOrWhiteSpace(To))
+                    return null;
+                var from = DateTime.Parse(From);
+                var to = DateTime.Parse(To);
+                return Convert.ToInt32(Math.Round((to - from).TotalDays, 0));
             }
         }
 
@@ -45,8 +50,8 @@ namespace Cascade.Booking.Models
                         guest.FirstName + FieldBreak +
                         guest.Category + FieldBreak +
                         guest.CostPerNight.ToString() + FieldBreak +
-                        guest.From.ToString() + FieldBreak +
-                        guest.To.ToString() +
+                        guest.From + FieldBreak +
+                        guest.To +
                         RecordBreak;
                 }
             }
@@ -71,8 +76,8 @@ namespace Cascade.Booking.Models
                         FirstName = fields[2],
                         Category = (GuestCategory)Enum.Parse(typeof(GuestCategory), fields[3]),
                         CostPerNight = Convert.ToDecimal(fields[4]),
-                        From = Convert.ToDateTime(fields[5]),
-                        To = Convert.ToDateTime(fields[6])
+                        From = fields[5],
+                        To = fields[6]
                     };
                     guests.Add(guest);
                 }

@@ -13,8 +13,10 @@ namespace Cascade.Booking.ViewModels
     public enum BookingBulkFilter
     {
         All,
-        Closed,
-        Open
+        Tentative,
+        Firm,
+        Cancelled,
+        Standby
     }
     [TypeConverter(typeof(PascalCaseWordSplittingEnumConverter))]
     public enum BookingBulkAction

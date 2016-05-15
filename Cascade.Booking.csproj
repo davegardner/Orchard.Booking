@@ -138,6 +138,7 @@
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="ResourceManifest.cs" />
     <Compile Include="Services\BookingService.cs" />
+    <Compile Include="ViewModels\GuestVm.cs" />
     <Compile Include="ViewModels\SeasonSummaryViewModel.cs" />
     <Compile Include="ViewModels\SeasonIndexViewModel.cs" />
     <Compile Include="ViewModels\SeasonIndexOptions.cs" />
@@ -172,7 +173,7 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Admin\EditorTemplates\Guest.cshtml" />
+    <Content Include="Views\Admin\EditorTemplates\GuestVm.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\AdminSeason\Index.cshtml" />

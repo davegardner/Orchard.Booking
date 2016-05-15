@@ -34,8 +34,10 @@
                 <tr>
                     <th scope="col">&nbsp;&darr;</th>
                     <th scope="col">@T("Name")</th>
-                    <th scope="col">@T("Number of Guests")</th>
+                    <th scope="col">@T("State")</th>
                     <th scope="col">@T("Season")</th>
+                    <th scope="col">@T("Number of Guests")</th>
+                    <th scope="col">@T("Total")</th>
                     <th scope="col" style="width:20px">@T("Action")</th>
             </thead>
             @{var bookingIndex = 0;}
@@ -51,8 +53,10 @@
                     <td>
                         <a href="@Url.Action("Edit", new { booking.Part.Id })" title="@booking.Part.Name">@booking.Part.Name</a>
                     </td>
-                    <td>@guests.Count().ToString()</td>
+                    <td>@booking.Part.BookingState</td>
                     <td>@booking.Part.Year</td>
+                    <td>@guests.Count().ToString()</td>
+                    <td>@booking.Part.Total.ToString()</td>
                     <td>
                         <div class="actions">
                             <a href="@Url.Action("Edit", new { booking.Part.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")

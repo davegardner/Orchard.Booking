@@ -15,7 +15,7 @@ namespace Cascade.Booking.ViewModels
 
         public BookingState BookingState { get; set; }
         public int Year{ get; set; }
-        public IEnumerable<Guest> Guests { get; set; }
+        public IEnumerable<GuestVm> Guests { get; set; }
         public IEnumerable<SelectListItem> BookingStates {
             get {
                 return Enum.GetNames(typeof (BookingState)).Select(

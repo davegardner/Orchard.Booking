@@ -44,6 +44,10 @@ namespace Cascade.Booking.Models
             }
         }
 
+        public decimal? Total
+        {
+            get { return Guests.Sum(g => g.TotalCost); }
+        }
         /// <summary>
         /// Lazyloaded Season Part
         /// </summary>
