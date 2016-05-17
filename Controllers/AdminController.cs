@@ -64,31 +64,31 @@ namespace Cascade.Booking.Controllers
                     case BookingBulkAction.Delete:
                         foreach (var bookingSummaryViewModel in checkedEntries)
                         {
-                            bs.Delete(bookingSummaryViewModel.Part.Id);
+                            bs.Delete(bookingSummaryViewModel.Id);
                         }
                         break;
                     case BookingBulkAction.ChangeStateToTentative:
                         foreach (var bookingSummaryViewModel in checkedEntries)
                         {
-                            bs.SetBookingState(bookingSummaryViewModel.Part.Id, BookingState.Tentative);
+                            bs.SetBookingState(bookingSummaryViewModel.Id, BookingState.Tentative);
                         }
                         break;
                     case BookingBulkAction.ChangeStateToFirm:
                         foreach (var bookingSummaryViewModel in checkedEntries)
                         {
-                            bs.SetBookingState(bookingSummaryViewModel.Part.Id, BookingState.Firm);
+                            bs.SetBookingState(bookingSummaryViewModel.Id, BookingState.Firm);
                         }
                         break;
                     case BookingBulkAction.ChangeStateToCancelled:
                         foreach (var bookingSummaryViewModel in checkedEntries)
                         {
-                            bs.SetBookingState(bookingSummaryViewModel.Part.Id, BookingState.Cancelled);
+                            bs.SetBookingState(bookingSummaryViewModel.Id, BookingState.Cancelled);
                         }
                         break;
                     case BookingBulkAction.ChangeStateToStandby:
                         foreach (var bookingSummaryViewModel in checkedEntries)
                         {
-                            bs.SetBookingState(bookingSummaryViewModel.Part.Id, BookingState.Standby);
+                            bs.SetBookingState(bookingSummaryViewModel.Id, BookingState.Standby);
                         }
                         break;
                     default:
@@ -136,17 +136,15 @@ namespace Cascade.Booking.Controllers
                 .Skip(pager.GetStartIndex())
                 .Take(pager.PageSize);
 
-
-
-            foreach (var booking in bookings.ToList())
+            model.Bookings = bookings.Select(b => new BookingSummaryViewModel
             {
-                var bookingSummaryVm = new BookingSummaryViewModel
-                {
-                    Part = booking,
-                    IsChecked = false
-                };
-                model.Bookings.Add(bookingSummaryVm);
-            }
+                Id = b.Id,
+                Name = b.Name,
+                BookingState = b.BookingState,
+                Guests = b.Guests,
+                IsChecked = false
+            }).ToList();
+
             model.Pager = Shape.Pager(pager).TotalItemCount(bs.GetAllBookings().Count());
             model.Options = options;
             return View(model);
@@ -155,10 +153,7 @@ namespace Cascade.Booking.Controllers
         /////////////////// CREATE ///////////////////////
         public ActionResult Create()
         {
-            var bookingVm = new BookingDetailsViewModel
-            {
-                Year = clock.UtcNow.Year
-            };
+            var bookingVm = new BookingDetailsViewModel();
             return View(bookingVm);
         }
 
@@ -193,8 +188,7 @@ namespace Cascade.Booking.Controllers
             {
                 Id = booking.Id,
                 Name = booking.Name,
-                Year = booking.Year,
-                Guests = booking.Guests.Select(g => ConvertToGuestVm(g)).ToList(),
+                Guests = booking.Guests.Select(g => ConvertToGuestVm(g, bs.GetSeason(g))).ToList(),
                 BookingState = booking.BookingState
             };
             return View(bookingVm);
@@ -230,19 +224,59 @@ namespace Cascade.Booking.Controllers
 
         private bool PersistBooking(BookingDetailsViewModel bookingVm)
         {
+         
+
             if (ModelState.IsValid)
             {
                 var bookingPart = bs.Get(bookingVm.Id) ?? cm.Create<BookingPart>("Booking");
                 bookingPart.BookingState = bookingVm.BookingState;
                 bookingPart.Name = bookingVm.Name;
-                bookingPart.Year = bookingVm.Year;
                 bookingPart.Guests = bookingVm.Guests == null ? null : bookingVm.Guests.Where(g => !g.Deleted).Select(g => ConvertToGuest(g)).ToList();
-                bs.SaveOrUpdate(bookingPart);
+
+                // Validation
+                if (GuestDatesOutOfRange(bookingVm))
+                {
+                    ModelState.AddModelError("GuestDateOutOfRange", "One or more guest dates are out of range");
+                }
+
+                var guestCount = bookingPart.Guests.Count();
+                bs.SaveOrUpdateBooking(bookingPart);
+                if (bookingPart.Guests.Count() != guestCount)
+                {
+                    var guestNames = DuplicatedGuests(bookingPart);
+                    Services.Notifier.Information(T("One or more guest bookings have been duplicated because they crossed more than one season. Rates may be different for each season. The following guests are duplicated: " + guestNames));
+                }
             }
             return ModelState.IsValid;
         }
 
-        private GuestVm ConvertToGuestVm(Guest guest)
+        private bool GuestDatesOutOfRange(BookingDetailsViewModel bookingVm)
+        {
+            var from = bookingVm.Guests.Min(a => dls.ConvertFromLocalizedDateString(a.From));
+            var to = bookingVm.Guests.Max(a => dls.ConvertFromLocalizedDateString(a.To));
+            var seasons = bs.GetAllSeasons().ToList();
+            if (from < seasons.Min(s => s.From) || to > seasons.Max(s => s.To))
+                return true;
+            return false;
+        }
+
+        private string DuplicatedGuests(BookingPart bookingPart)
+        {
+            var queryNames = from guest in bookingPart.Guests
+                             group guest by guest.FirstName + " " + guest.LastName into guestGroup
+                             orderby guestGroup.Key
+                             select guestGroup;
+
+            var duplicatedNames = new List<string>();
+            foreach (var group in queryNames)
+            {
+                if (group.Count() > 1)
+                    duplicatedNames.Add(group.Key);
+            }
+            return String.Join(", ", duplicatedNames);
+        }
+
+        private GuestVm ConvertToGuestVm(Guest guest, SeasonPart season)
         {
             var result = new GuestVm
             {
@@ -254,6 +288,7 @@ namespace Cascade.Booking.Controllers
                 Category = guest.Category,
                 From = guest.From,
                 To = guest.To,
+                SeasonName = season.Title,
                 CostPerNight = guest.CostPerNight
             };
             return result;

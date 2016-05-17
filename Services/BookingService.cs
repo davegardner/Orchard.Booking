@@ -1,5 +1,6 @@
 ﻿using Cascade.Booking.Models;
 using Orchard.ContentManagement;
+using Orchard.Localization.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,20 +20,23 @@ namespace Cascade.Booking.Services
         IEnumerable<BookingPart> GetAllBookings(int year = 0);
         BookingPart Get(int id);
         void SetBookingState(int id, BookingState state);
-        void SaveOrUpdate(BookingPart bookingPart);
+        void SaveOrUpdateBooking(BookingPart bookingPart);
         void DeleteSeason(int id);
         IEnumerable<SeasonPart> GetAllSeasons();
         SeasonPart GetSeason(int id);
+        SeasonPart GetSeason(Guest guest);
         void SaveOrUpdateSeason(SeasonPart seasonPart);
     }
 
     // Implementation ////////////////////////////////////
     public class BookingService : IBookingService
     {
+        private readonly IDateLocalizationServices dls;
         private readonly IContentManager cm;
-        public BookingService(IContentManager contentManager)
+        public BookingService(IContentManager contentManager, IDateLocalizationServices dateLocationServices)
         {
             cm = contentManager;
+            dls = dateLocationServices;
         }
 
         public void Delete(int id)
@@ -59,16 +63,15 @@ namespace Cascade.Booking.Services
         public IEnumerable<BookingPart> GetAllBookings(int year = 0)
         {
             IEnumerable<BookingPart> bookings;
-            if(year == 0)
-                bookings = cm.Query<BookingPart, BookingRecord>().List();
-            else
-                bookings = cm.Query<BookingPart, BookingRecord>().Where(b => b.Year == year).List();
+            bookings = cm.Query<BookingPart, BookingRecord>().List();
             return bookings;
         }
 
-        public IEnumerable<SeasonPart>GetAllSeasons()
+        public IEnumerable<SeasonPart> GetAllSeasons()
         {
-            return cm.Query<SeasonPart, SeasonRecord>().List();
+            return cm.Query<SeasonPart, SeasonRecord>()
+                .OrderByDescending(s=>s.FromDate)
+                .List();
         }
 
         public SeasonPart GetSeason(int id)
@@ -79,82 +82,27 @@ namespace Cascade.Booking.Services
             return cm.Get<SeasonPart>(id);
         }
 
-        public void NormalizeGuestBookings(BookingPart booking)
+        public SeasonPart GetSeason(Guest guest)
         {
-            //    var guests = booking.Guests.ToList();
-            //    var season = booking.SeasonPart;
-
-            //    foreach (var guest in guests)
-            //    {
-            //        var numberOfGuests = guests.Count;
-            //        var index = guests.IndexOf(guest);
-            //        if (guest.From.Year != booking.SeasonPart.Year || guest.To.Year != booking.SeasonPart.Year)
-            //            throw new Exception("Attempted to book a guest for a period outside the current Season");
-
-            //        // if a guest's booking dates extend over more than one season segment then create a new 'guest' for each
-            //        // segment
-
-            //        if (guest.From < season.ShoulderFrom && guest.To > season.ShoulderFrom)
-            //        {
-            //            guests.Insert(index++, new Guest
-            //            {
-            //                From = guest.From,
-            //                To = season.ShoulderFrom < guest.To ? season.ShoulderFrom : guest.To
-            //            });
-            //            guest.From = season.ShoulderFrom;
-            //        }
-
-            //        if (guest.From < season.PeakFrom && guest.To > season.PeakFrom)
-            //        {
-            //            guests.Insert(index++, new Guest
-            //            {
-            //                From = guest.From,
-            //                To = season.PeakFrom < guest.To ? season.PeakFrom : guest.To
-            //            });
-            //            guest.From = season.PeakFrom;
-            //        }
-
-            //        if (guest.From < season.PeakTo && guest.To > season.PeakTo)
-            //        {
-            //            guests.Insert(index++, new Guest
-            //            {
-            //                From = guest.From,
-            //                To = season.PeakTo < guest.To ? season.PeakTo : guest.To
-            //            });
-            //            guest.From = season.PeakTo;
-            //        }
-
-            //        if (guest.From < season.ShoulderTo && guest.To > season.ShoulderTo)
-            //        {
-            //            guests.Insert(index++, new Guest
-            //            {
-            //                From = guest.From,
-            //                To = season.ShoulderTo < guest.To ? season.ShoulderTo : guest.To
-            //            });
-            //            guest.From = season.ShoulderTo;
-            //        }
-
-            //        if (guest.From > season.ShoulderTo)
-            //        {
-            //            guests.Insert(index++, new Guest
-            //            {
-            //                From = guest.From,
-            //                To = guest.To
-            //            });
-            //        }
-
-            //        // if new segments were created then delete the original guest
-            //        if (numberOfGuests < guests.Count)
-            //        {
-            //            guests.Remove(guest);
-            //        }
-            //    }
-
-            //    booking.Guests = guests;
+            if (guest == null)
+                return null;
+            var seasons = GetAllSeasons();
+            return seasons.FirstOrDefault(s => s.From >= dls.ConvertFromLocalizedDateString(guest.From) && s.From <= dls.ConvertFromLocalizedDateString(guest.To));
         }
 
-        public void SaveOrUpdate(BookingPart bookingPart)
+        public void NormalizeGuestBookings(BookingPart booking)
         {
+            var guests = booking.Guests.ToList();
+            var seasons = GetAllSeasons().ToList();
+            foreach (var guest in guests)
+            {
+                Normalize(seasons, booking, guest);
+            }
+        }
+
+        public void SaveOrUpdateBooking(BookingPart bookingPart)
+        {
+            NormalizeGuestBookings(bookingPart);
             cm.Publish(bookingPart.ContentItem);
         }
 
@@ -165,7 +113,64 @@ namespace Cascade.Booking.Services
 
         public void SetBookingState(int id, BookingState state)
         {
-            Get(id).BookingState = state;
+            var booking = Get(id);
+            booking.BookingState = state;
+            SaveOrUpdateBooking(booking);
         }
+
+        /// <summary>
+        /// The season determines the guest Cost Per Night. The person booking may enter from/to dates
+        /// that cover more than one season. To cater for this we split the Guest into one guest record 
+        /// per season, so there are no overlaps.
+        /// </summary>
+        private void Normalize(IEnumerable<SeasonPart> seasons, BookingPart booking, Guest currentGuest)
+        {
+            // make a list of all except the current guest. Current guest gets added back later.
+            var guestList = booking.Guests
+                .Except(new List<Guest> { currentGuest })
+                .ToList();
+
+            // Do date conversions just once
+            DateTime? guestFrom = dls.ConvertFromLocalizedDateString(currentGuest.From);
+            DateTime? guestTo = dls.ConvertFromLocalizedDateString(currentGuest.To);
+
+            // Get a list of seasons that are partly or wholly covered by this guest booking
+            var coveredSeasons = seasons
+                .Where(s => guestFrom >= s.From && guestTo <= s.To  // totally enclosed
+                    || s.From < guestFrom && guestFrom <= s.To       // start season
+                    || s.From <= guestTo && guestTo < s.To)          // end season
+                .OrderBy(s => s.From);
+
+            // create one guest record per covered season
+            guestList.AddRange(coveredSeasons.Select(s => new Guest
+            {
+                Id = 0,
+                Sequence = 0,
+                Deleted = false,
+                LastName = currentGuest.LastName,
+                FirstName = currentGuest.FirstName,
+                Category = currentGuest.Category,
+                From = dls.ConvertToLocalizedDateString(MaxDate(guestFrom, s.From)),
+                To = dls.ConvertToLocalizedDateString(MinDate(guestTo, s.To)),
+                CostPerNight = s.Rate
+            }));
+
+            // replace guest list
+            booking.Guests = guestList;
+        }
+
+        private DateTime? MaxDate(DateTime? d1, DateTime? d2)
+        {
+            if (d1 > d2)
+                return d1;
+            return d2;
+        }
+        private DateTime? MinDate(DateTime? d1, DateTime? d2)
+        {
+            if (d1 < d2)
+                return d1;
+            return d2;
+        }
+
     }
 }

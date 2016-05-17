@@ -18,6 +18,7 @@ namespace Cascade.Booking.ViewModels
         public GuestCategory Category { get; set; }
         public string From { get; set; }
         public string To { get; set; }
+        public string SeasonName { get; set; }
         public Decimal CostPerNight { get; set; }
         public Decimal? TotalCost
         {

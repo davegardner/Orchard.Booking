@@ -14,7 +14,7 @@ namespace Cascade.Booking.ViewModels
         public string Name { get; set; }
 
         public BookingState BookingState { get; set; }
-        public int Year{ get; set; }
+        //public int Year{ get; set; }
         public IEnumerable<GuestVm> Guests { get; set; }
         public IEnumerable<SelectListItem> BookingStates {
             get {

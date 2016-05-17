@@ -9,7 +9,7 @@ namespace Cascade.Booking.Models
     {
         public virtual string Name { get; set; }
         public virtual string RawGuests { get; set; }
-        public virtual int Year { get; set; }
+        //public virtual int Year { get; set; }
         public virtual BookingState BookingState { get; set;}
     }
 
@@ -20,11 +20,11 @@ namespace Cascade.Booking.Models
             get { return Retrieve(r => r.Name); }
             set { Store(r => r.Name, value); }
         }
-        public int Year
-        {
-            get { return Retrieve(r => r.Year); }
-            set { Store(r => r.Year, value); }
-        }
+        //public int Year
+        //{
+        //    get { return Retrieve(r => r.Year); }
+        //    set { Store(r => r.Year, value); }
+        //}
         public BookingState BookingState
         {
             get { return Retrieve(r => r.BookingState); }

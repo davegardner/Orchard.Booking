@@ -11,6 +11,24 @@ namespace Cascade.Booking.Models
         private const char FieldBreak = '\t';
         private const char RecordBreak = '\r';
 
+        public Guest()
+        {
+
+        }
+
+        public Guest(Guest guest)
+        {
+            Id = 0;
+            Sequence = 0;
+            Deleted = false;
+            LastName = guest.LastName;
+            FirstName = guest.FirstName;
+            Category = guest.Category;
+            From = guest.From;
+            To = guest.To;
+            CostPerNight = guest.CostPerNight;
+        }
+
         public int Id { get; set; }
         public int Sequence { get; set; }    // not persisted
         public bool Deleted { get; set; }   // not persisted
@@ -29,11 +47,16 @@ namespace Cascade.Booking.Models
         {
             get
             {
-                if (String.IsNullOrWhiteSpace(From) || String.IsNullOrWhiteSpace(To))
-                    return null;
-                var from = DateTime.Parse(From);
-                var to = DateTime.Parse(To);
-                return Convert.ToInt32(Math.Round((to - from).TotalDays, 0));
+                int? nights = 0;
+                try
+                {
+                    nights = Convert.ToInt32(Math.Round((DateTime.Parse(To) - DateTime.Parse(From)).TotalDays, 0));
+                }
+                catch
+                {
+                    nights = null;
+                }
+                return nights;
             }
         }
 

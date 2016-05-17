@@ -52,8 +52,8 @@
                     <td>
                         <a href="@Url.Action("Edit", new { season.Part.Id })" title="@season.Part.Title">@season.Part.Title</a>
                     </td>
-                    <td>@season.Part.From.ToShortDateString()</td>
-                    <td>@season.Part.To.ToShortDateString()</td>
+                    <td>@season.Part.From.ToLocalTime().ToShortDateString()</td>
+                    <td>@season.Part.To.ToLocalTime().ToShortDateString()</td>
                     <td>@season.Part.Rate.ToString()</td>
                     <td>
                         <div class="actions">

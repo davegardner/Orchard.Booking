@@ -21,8 +21,8 @@
         @Html.LabelFor(m => m.Name, T("Name"))
         @Html.TextBoxFor(m => m.Name, new { @class = "text large", autofocus="autofocus" })
 
-        @Html.LabelFor(m => m.Year, T("Year"))
-        @Html.EditorFor(m => m.Year)
+        @*@Html.LabelFor(m => m.Year, T("Year"))
+        @Html.EditorFor(m => m.Year)*@
 
         @Html.LabelFor(m => m.BookingState, T("Booking State"))
         @Html.EnumDropDownListFor(m => m.BookingState)

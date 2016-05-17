@@ -17,7 +17,7 @@ namespace Cascade.Booking
                 .ContentPartRecord()
                 .Column("Name", DbType.String)
                 .Column("RawGuests", DbType.String, c => c.Unlimited())
-                .Column("Year", DbType.Int32)
+                //.Column("Year", DbType.Int32)
                 .Column("BookingState", DbType.String)
             );
 

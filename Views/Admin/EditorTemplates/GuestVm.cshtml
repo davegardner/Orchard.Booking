@@ -28,10 +28,13 @@
         <input type="datetime" value="@Model.To" name='@prefix@Html.NameFor(m=>m.To)' />
     </td>
     <td>
-        <input type="text" value="@Model.CostPerNight.ToString()" name='@prefix@Html.NameFor(m=>m.CostPerNight)' />
+        @Html.DisplayFor(m => m.SeasonName)
     </td>
     <td>
-        <input type="text" value="@Model.TotalCost.ToString()" name='@prefix@Html.NameFor(m=>m.TotalCost)' />
+        @Html.DisplayFor(m => m.CostPerNight)
+    </td>
+    <td>
+        @Html.DisplayFor(m=>m.TotalCost)
     </td>
     <td>
         <input type="checkbox" value="true" @(Model.Deleted ? "checked" : "") name='@prefix@Html.NameFor(m=>m.Deleted)' />

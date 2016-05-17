@@ -44,23 +44,24 @@
             @foreach (var booking in Model.Bookings)
             {
                 var bookingClass = "";
-                IEnumerable<Guest> guests = booking.Part.Guests;
-                <tr itemscope itemid="@booking.Part.Id" itemtype="http://orchardproject.net/data/Poll" class="@bookingClass">
+                IEnumerable<Guest> guests = booking.Guests;
+                <tr itemscope itemid="@booking.Id" itemtype="http://orchardproject.net/data/Poll" class="@bookingClass">
                     <td>
-                        <input type="hidden" value="@booking.Part.Id" name="@Html.NameOf(m => m.Bookings[bookingIndex].Part.Id)"/>
+                        <input type="hidden" value="@booking.Id" name="@Html.NameOf(m => m.Bookings[bookingIndex].Id)"/>
                         <input type="checkbox" value="true" name="@Html.NameOf(m => m.Bookings[bookingIndex].IsChecked)"/>
                     </td>
                     <td>
-                        <a href="@Url.Action("Edit", new { booking.Part.Id })" title="@booking.Part.Name">@booking.Part.Name</a>
+                        <a href="@Url.Action("Edit", new { booking.Id })" title="@booking.Name">@booking.Name</a>
                     </td>
-                    <td>@booking.Part.BookingState</td>
-                    <td>@booking.Part.Year</td>
+                    <td>@booking.BookingState</td>
+                    @*<td>@booking.Year</td>*@
+                    <td>(season)</td>
                     <td>@guests.Count().ToString()</td>
-                    <td>@booking.Part.Total.ToString()</td>
+                    <td>@booking.Total.ToString()</td>
                     <td>
                         <div class="actions">
-                            <a href="@Url.Action("Edit", new { booking.Part.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")
-                            <a href="@Url.Action("Delete", new { booking.Part.Id, returnUrl = ViewContext.RequestContext.HttpContext.Request.ToUrlString() })" itemprop="RemoveUrl UnsafeUrl">@T("Delete")</a>
+                            <a href="@Url.Action("Edit", new { booking.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")
+                            <a href="@Url.Action("Delete", new { booking.Id, returnUrl = ViewContext.RequestContext.HttpContext.Request.ToUrlString() })" itemprop="RemoveUrl UnsafeUrl">@T("Delete")</a>
                         </div>
                     </td>
                 </tr>
