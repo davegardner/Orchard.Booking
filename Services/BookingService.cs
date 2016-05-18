@@ -87,7 +87,8 @@ namespace Cascade.Booking.Services
             if (guest == null)
                 return null;
             var seasons = GetAllSeasons();
-            return seasons.FirstOrDefault(s => s.From >= dls.ConvertFromLocalizedDateString(guest.From) && s.From <= dls.ConvertFromLocalizedDateString(guest.To));
+            var from = dls.ConvertFromLocalizedDateString(guest.From);
+            return seasons.FirstOrDefault(s => s.From >= from && from  < s.To);
         }
 
         public void NormalizeGuestBookings(BookingPart booking)

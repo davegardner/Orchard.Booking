@@ -288,7 +288,7 @@ namespace Cascade.Booking.Controllers
                 Category = guest.Category,
                 From = guest.From,
                 To = guest.To,
-                SeasonName = season.Title,
+                SeasonName = season == null ? null : season.Title,
                 CostPerNight = guest.CostPerNight
             };
             return result;
