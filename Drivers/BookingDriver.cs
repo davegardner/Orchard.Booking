@@ -5,6 +5,7 @@ using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
 using Orchard.Localization;
 using System;
+using System.Xml;
 
 namespace Cascade.Booking.Drivers
 {
@@ -67,7 +68,7 @@ namespace Cascade.Booking.Drivers
                 part.BookingState = (BookingState)Enum.Parse(typeof(BookingState), bs)
             );
             context.ImportAttribute(part.PartDefinition.Name, "RawGuests", rawGuests =>
-                part.Record.RawGuests = rawGuests
+                part.Record.RawGuests = XmlConvert.DecodeName(rawGuests)
             );
             context.ImportAttribute(part.PartDefinition.Name, "Name", name=>
                 part.Name = name
@@ -78,7 +79,7 @@ namespace Cascade.Booking.Drivers
         protected override void Exporting(BookingPart part, ExportContentContext context)
         {
             context.Element(part.PartDefinition.Name).SetAttributeValue("BookingState", part.BookingState.ToString());
-            context.Element(part.PartDefinition.Name).SetAttributeValue("RawGuests", part.Record.RawGuests);
+            context.Element(part.PartDefinition.Name).SetAttributeValue("RawGuests", XmlConvert.EncodeName( part.Record.RawGuests));
             context.Element(part.PartDefinition.Name).SetAttributeValue("Name", part.Name);
         }
     }

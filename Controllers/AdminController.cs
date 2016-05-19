@@ -234,9 +234,9 @@ namespace Cascade.Booking.Controllers
                 bookingPart.Guests = bookingVm.Guests == null ? null : bookingVm.Guests.Where(g => !g.Deleted).Select(g => ConvertToGuest(g)).ToList();
 
                 // Validation
-                if (GuestDatesOutOfRange(bookingVm))
+                if (AreGuestDatesOutOfRange(bookingVm))
                 {
-                    ModelState.AddModelError("GuestDateOutOfRange", "One or more guest dates are out of range");
+                    ModelState.AddModelError("GuestDateOutOfRange", "One or more guest dates are out of range. Have you tried to book a season that hasn't opened?");
                 }
 
                 var guestCount = bookingPart.Guests.Count();
@@ -244,13 +244,13 @@ namespace Cascade.Booking.Controllers
                 if (bookingPart.Guests.Count() != guestCount)
                 {
                     var guestNames = DuplicatedGuests(bookingPart);
-                    Services.Notifier.Information(T("One or more guest bookings have been duplicated because they crossed more than one season. Rates may be different for each season. The following guests are duplicated: " + guestNames));
+                    Services.Notifier.Information(T("The following guests have been adjusted in booking '" + bookingVm.Name + "' to ensure each guest entry is for a single season: " + guestNames + "." ));
                 }
             }
             return ModelState.IsValid;
         }
 
-        private bool GuestDatesOutOfRange(BookingDetailsViewModel bookingVm)
+        private bool AreGuestDatesOutOfRange(BookingDetailsViewModel bookingVm)
         {
             var from = bookingVm.Guests.Min(a => dls.ConvertFromLocalizedDateString(a.From));
             var to = bookingVm.Guests.Max(a => dls.ConvertFromLocalizedDateString(a.To));
@@ -286,8 +286,8 @@ namespace Cascade.Booking.Controllers
                 LastName = guest.LastName,
                 FirstName = guest.FirstName,
                 Category = guest.Category,
-                From = guest.From,
-                To = guest.To,
+                From = dls.ConvertToLocalizedDateString(guest.From),
+                To = dls.ConvertToLocalizedDateString(guest.To),
                 SeasonName = season == null ? null : season.Title,
                 CostPerNight = guest.CostPerNight
             };
@@ -304,8 +304,8 @@ namespace Cascade.Booking.Controllers
                 LastName = guest.LastName,
                 FirstName = guest.FirstName,
                 Category = guest.Category,
-                From = guest.From,
-                To = guest.To,
+                From = dls.ConvertFromLocalizedDateString(guest.From),
+                To = dls.ConvertFromLocalizedDateString(guest.To),
                 CostPerNight = guest.CostPerNight
             };
             return result;

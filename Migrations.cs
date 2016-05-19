@@ -30,34 +30,57 @@ namespace Cascade.Booking
                 .Column("Rate", DbType.Decimal)
             );
 
-            ContentDefinitionManager.AlterPartDefinition(
-                typeof(BookingPart).Name, cfg => cfg.Attachable());
+            ContentDefinitionManager.AlterPartDefinition(typeof(BookingPart).Name, cfg => cfg
+                .WithDescription("Represents a season (with a daily Rate) within which a booking can be made.")
+                .Attachable());
 
             ContentDefinitionManager.AlterTypeDefinition("Booking", cfg => cfg
-               .WithPart(typeof(BookingPart).Name)
+                .WithSetting("Description", "Represents a booking and a list of guests.")
+                .WithPart(typeof(BookingPart).Name)
+                .WithPart("IdentityPart")
                );
 
-            ContentDefinitionManager.AlterPartDefinition(
-                typeof(SeasonPart).Name, cfg => cfg.Attachable());
+            ContentDefinitionManager.AlterPartDefinition(typeof(SeasonPart).Name, cfg => cfg
+                .WithDescription("A booking and a list of guests.")
+                .Attachable());
 
             ContentDefinitionManager.AlterTypeDefinition("Season", cfg => cfg
-               .WithPart(typeof(SeasonPart).Name)
+                .WithSetting("Description", "Represents a season (with a daily Rate) within which a booking can be made.")
+                .WithPart(typeof(SeasonPart).Name)
+                .WithPart("IdentityPart")
                );
 
-            return 1;
+            return 4;
         }
 
-        //public int UpdateFrom1()
-        //{
+        public int UpdateFrom1()
+        {
+            ContentDefinitionManager.AlterTypeDefinition("Booking", cfg => cfg.WithPart("IdentityPart"));
+            ContentDefinitionManager.AlterTypeDefinition("Season", cfg => cfg.WithPart("IdentityPart"));
 
-        //    return 2;
-        //}
+            return 2;
+        }
 
-        //public int UpdateFrom2()
-        //{
+        public int UpdateFrom2()
+        {
+            ContentDefinitionManager.AlterTypeDefinition("Booking", cfg => cfg
+                .WithSetting("Description", "Represents a booking and a list of guests."));
+            ContentDefinitionManager.AlterTypeDefinition("Season", cfg => cfg
+                .WithSetting("Description", "Represents a season (with a daily Rate) within which a booking can be made."));
 
-        //    return 3;
-        //}
+            return 3;
+        }
+        public int UpdateFrom3()
+        {
+            ContentDefinitionManager.AlterPartDefinition(typeof(BookingPart).Name, cfg => cfg
+                .WithDescription("Represents a season (with a daily Rate) within which a booking can be made.")
+                );
+            ContentDefinitionManager.AlterPartDefinition(typeof(SeasonPart).Name, cfg => cfg
+                .WithDescription("A booking and a list of guests.")
+                );
+
+            return 4;
+        }
     }
 
 }

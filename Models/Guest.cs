@@ -1,6 +1,7 @@
 ﻿using Orchard.ContentManagement.Records;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Web;
 
@@ -35,8 +36,8 @@ namespace Cascade.Booking.Models
         public string LastName { get; set; }
         public string FirstName { get; set; }
         public GuestCategory Category { get; set; }
-        public string From { get; set; }
-        public string To { get; set; }
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
         public Decimal CostPerNight { get; set; }
         public Decimal? TotalCost
         {
@@ -47,15 +48,14 @@ namespace Cascade.Booking.Models
         {
             get
             {
-                int? nights = 0;
+                int? nights = null;
                 try
                 {
-                    nights = Convert.ToInt32(Math.Round((DateTime.Parse(To) - DateTime.Parse(From)).TotalDays, 0));
+                    var duration = (To - From);
+                    if (duration.HasValue)
+                        nights = duration.Value.Days;
                 }
-                catch
-                {
-                    nights = null;
-                }
+                catch { }
                 return nights;
             }
         }
@@ -73,8 +73,8 @@ namespace Cascade.Booking.Models
                         guest.FirstName + FieldBreak +
                         guest.Category + FieldBreak +
                         guest.CostPerNight.ToString() + FieldBreak +
-                        guest.From + FieldBreak +
-                        guest.To +
+                        (guest.From.HasValue ? guest.From.Value.ToString("o") : "") + FieldBreak +
+                        (guest.To.HasValue ? guest.To.Value.ToString("o") : "") +
                         RecordBreak;
                 }
             }
@@ -99,8 +99,8 @@ namespace Cascade.Booking.Models
                         FirstName = fields[2],
                         Category = (GuestCategory)Enum.Parse(typeof(GuestCategory), fields[3]),
                         CostPerNight = Convert.ToDecimal(fields[4]),
-                        From = fields[5],
-                        To = fields[6]
+                        From = DateTime.Parse(fields[5], null, DateTimeStyles.RoundtripKind),
+                        To = DateTime.Parse(fields[6], null, DateTimeStyles.RoundtripKind),
                     };
                     guests.Add(guest);
                 }

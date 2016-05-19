@@ -87,8 +87,8 @@ namespace Cascade.Booking.Services
             if (guest == null)
                 return null;
             var seasons = GetAllSeasons();
-            var from = dls.ConvertFromLocalizedDateString(guest.From);
-            return seasons.FirstOrDefault(s => s.From >= from && from  < s.To);
+            var from = guest.From;
+            return seasons.FirstOrDefault(s => s.From <= from && from  < s.To);
         }
 
         public void NormalizeGuestBookings(BookingPart booking)
@@ -132,14 +132,14 @@ namespace Cascade.Booking.Services
                 .ToList();
 
             // Do date conversions just once
-            DateTime? guestFrom = dls.ConvertFromLocalizedDateString(currentGuest.From);
-            DateTime? guestTo = dls.ConvertFromLocalizedDateString(currentGuest.To);
+            DateTime? guestFrom = currentGuest.From;
+            DateTime? guestTo = currentGuest.To;
 
             // Get a list of seasons that are partly or wholly covered by this guest booking
             var coveredSeasons = seasons
-                .Where(s => guestFrom >= s.From && guestTo <= s.To  // totally enclosed
-                    || s.From < guestFrom && guestFrom <= s.To       // start season
-                    || s.From <= guestTo && guestTo < s.To)          // end season
+                .Where(s => guestFrom  <= s.From && s.To <= guestTo       // totally enclosed
+                    || s.From <= guestFrom && guestFrom <= s.To         // start season
+                    || s.From <= guestTo && guestTo <= s.To)            // end season
                 .OrderBy(s => s.From);
 
             // create one guest record per covered season
@@ -151,8 +151,8 @@ namespace Cascade.Booking.Services
                 LastName = currentGuest.LastName,
                 FirstName = currentGuest.FirstName,
                 Category = currentGuest.Category,
-                From = dls.ConvertToLocalizedDateString(MaxDate(guestFrom, s.From)),
-                To = dls.ConvertToLocalizedDateString(MinDate(guestTo, s.To)),
+                From = MaxDate(guestFrom, s.From),
+                To = MinDate(guestTo, s.To),
                 CostPerNight = s.Rate
             }));
 
