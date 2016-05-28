@@ -38,6 +38,7 @@ namespace Cascade.Booking
                 .WithSetting("Description", "Represents a booking and a list of guests.")
                 .WithPart(typeof(BookingPart).Name)
                 .WithPart("IdentityPart")
+                .WithPart("CommonPart")
                );
 
             ContentDefinitionManager.AlterPartDefinition(typeof(SeasonPart).Name, cfg => cfg
@@ -50,7 +51,7 @@ namespace Cascade.Booking
                 .WithPart("IdentityPart")
                );
 
-            return 4;
+            return 5;
         }
 
         public int UpdateFrom1()
@@ -70,6 +71,7 @@ namespace Cascade.Booking
 
             return 3;
         }
+
         public int UpdateFrom3()
         {
             ContentDefinitionManager.AlterPartDefinition(typeof(BookingPart).Name, cfg => cfg
@@ -80,6 +82,15 @@ namespace Cascade.Booking
                 );
 
             return 4;
+        }
+
+        public int UpdateFrom4()
+        {
+            ContentDefinitionManager.AlterTypeDefinition(typeof(BookingPart).Name, cfg => cfg
+                .WithPart("CommonPart")
+                );
+
+            return 5;
         }
     }
 

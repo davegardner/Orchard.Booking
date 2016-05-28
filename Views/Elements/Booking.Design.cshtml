@@ -1,0 +1,14 @@
+﻿@using Orchard.ContentManagement
+@using Orchard.Layouts.Helpers
+@{
+    var tagBuilder = TagBuilderExtensions.CreateElementTagBuilder(Model, "div");
+
+
+    tagBuilder.AddCssClass("something");
+
+}
+<h1>Booking</h1>
+<p>Renders the element inside the Layout Editor</p>
+@tagBuilder.ToHtmlString(TagRenderMode.StartTag)
+Name: @Model.Name
+@tagBuilder.ToHtmlString(TagRenderMode.EndTag)

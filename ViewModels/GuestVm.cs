@@ -11,13 +11,14 @@ namespace Cascade.Booking.ViewModels
     public class GuestVm
     {
         public int Id { get; set; }
+        public int BookingId { get; set; }
         public int Sequence { get; set; }    // not persisted
         public bool Deleted { get; set; }   // not persisted
         public string LastName { get; set; }
         public string FirstName { get; set; }
         public GuestCategory Category { get; set; }
-        public string From { get; set; }
-        public string To { get; set; }
+        public DateTimeEditor  From { get; set; }
+        public DateTimeEditor To { get; set; }
         public string SeasonName { get; set; }
         public Decimal CostPerNight { get; set; }
         public Decimal? TotalCost
@@ -32,7 +33,7 @@ namespace Cascade.Booking.ViewModels
                 int? nights = 0;
                 try
                 {
-                    nights = Convert.ToInt32(Math.Round((DateTime.Parse(To) - DateTime.Parse(From)).TotalDays, 0));
+                    nights = Convert.ToInt32(Math.Round((DateTime.Parse(To.Date) - DateTime.Parse(From.Date)).TotalDays, 0));
                 }
                 catch
                 {
@@ -50,5 +51,10 @@ namespace Cascade.Booking.ViewModels
             }
         }
 
+        public GuestVm()
+        {
+            From = new DateTimeEditor { ShowDate = true, ShowTime = false };
+            To = new DateTimeEditor { ShowDate = true, ShowTime = false };
+        }
     }
 }

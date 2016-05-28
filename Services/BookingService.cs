@@ -5,6 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Orchard.Security;
+using Orchard.Core.Common.Models;
+using Cascade.Booking.ViewModels;
+using Orchard.Core.Common.ViewModels;
 
 namespace Cascade.Booking.Services
 {
@@ -19,6 +23,7 @@ namespace Cascade.Booking.Services
         void Delete(int id);
         IEnumerable<BookingPart> GetAllBookings(int year = 0);
         BookingPart Get(int id);
+        BookingPart Get(int id, IUser user);
         void SetBookingState(int id, BookingState state);
         void SaveOrUpdateBooking(BookingPart bookingPart);
         void DeleteSeason(int id);
@@ -26,6 +31,11 @@ namespace Cascade.Booking.Services
         SeasonPart GetSeason(int id);
         SeasonPart GetSeason(Guest guest);
         void SaveOrUpdateSeason(SeasonPart seasonPart);
+        IEnumerable<BookingPart> GetBookings(IUser user);
+        GuestVm ConvertToGuestVm(int bookingId, Guest guest, SeasonPart season);
+        Guest ConvertToGuest(GuestVm guest);
+        string DuplicatedGuests(BookingPart bookingPart);
+        bool AreGuestDatesOutOfRange(BookingDetailsViewModel bookingVm);
     }
 
     // Implementation ////////////////////////////////////
@@ -49,6 +59,14 @@ namespace Cascade.Booking.Services
         public void DeleteSeason(int id)
         {
             throw new NotImplementedException();
+        }
+
+        public BookingPart Get(int id, IUser user)
+        {
+            var booking = Get(id);
+            if(booking.As<CommonPart>().Owner.Id != user.Id)
+                return null;
+            return booking;
         }
 
         public BookingPart Get(int id)
@@ -119,10 +137,19 @@ namespace Cascade.Booking.Services
             SaveOrUpdateBooking(booking);
         }
 
+        public IEnumerable<BookingPart> GetBookings(IUser user)
+        {
+            return cm.Query<BookingPart>()
+                .Join<CommonPartRecord>()
+                .Where(x => x.OwnerId == user.Id)
+                .List();
+        }
+
         /// <summary>
         /// The season determines the guest Cost Per Night. The person booking may enter from/to dates
         /// that cover more than one season. To cater for this we split the Guest into one guest record 
-        /// per season, so there are no overlaps.
+        /// per season, so we can later work out the cost by simply mutiplying number of nights by the
+        /// cost per night for that season.
         /// </summary>
         private void Normalize(IEnumerable<SeasonPart> seasons, BookingPart booking, Guest currentGuest)
         {
@@ -137,15 +164,18 @@ namespace Cascade.Booking.Services
 
             // Get a list of seasons that are partly or wholly covered by this guest booking
             var coveredSeasons = seasons
-                .Where(s => guestFrom  <= s.From && s.To <= guestTo       // totally enclosed
+                .Where(s => guestFrom  <= s.From && s.To <= guestTo     // totally enclosed
                     || s.From <= guestFrom && guestFrom <= s.To         // start season
                     || s.From <= guestTo && guestTo <= s.To)            // end season
                 .OrderBy(s => s.From);
 
+            // poor-man's id initialization
+            var index = guestList.Count > 0 ? guestList.Max(g=>g.Id) : 0;
+
             // create one guest record per covered season
             guestList.AddRange(coveredSeasons.Select(s => new Guest
             {
-                Id = 0,
+                Id = ++index,
                 Sequence = 0,
                 Deleted = false,
                 LastName = currentGuest.LastName,
@@ -171,6 +201,68 @@ namespace Cascade.Booking.Services
             if (d1 < d2)
                 return d1;
             return d2;
+        }
+
+        public GuestVm ConvertToGuestVm(int bookingId, Guest guest, SeasonPart season)
+        {
+            var result = new GuestVm
+            {
+                Id = guest.Id,
+                BookingId = bookingId,
+                Sequence = 0,
+                Deleted = false,
+                LastName = guest.LastName,
+                FirstName = guest.FirstName,
+                Category = guest.Category,
+                From = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(guest.From) },
+                To = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(guest.To) },
+                SeasonName = season == null ? null : season.Title,
+                CostPerNight = guest.CostPerNight
+            };
+            return result;
+        }
+
+        public Guest ConvertToGuest(GuestVm guest)
+        {
+            var result = new Guest
+            {
+                Id = guest.Id,
+                Sequence = 0,
+                Deleted = false,
+                LastName = guest.LastName,
+                FirstName = guest.FirstName,
+                Category = guest.Category,
+                From = dls.ConvertFromLocalizedDateString(guest.From.Date),
+                To = dls.ConvertFromLocalizedDateString(guest.To.Date),
+                CostPerNight = guest.CostPerNight
+            };
+            return result;
+        }
+
+        public bool AreGuestDatesOutOfRange(BookingDetailsViewModel bookingVm)
+        {
+            var from = bookingVm.Guests.Min(a => dls.ConvertFromLocalizedDateString(a.From.Date));
+            var to = bookingVm.Guests.Max(a => dls.ConvertFromLocalizedDateString(a.To.Date));
+            var seasons = GetAllSeasons().ToList();
+            if (from < seasons.Min(s => s.From) || to > seasons.Max(s => s.To))
+                return true;
+            return false;
+        }
+
+        public string DuplicatedGuests(BookingPart bookingPart)
+        {
+            var queryNames = from guest in bookingPart.Guests
+                             group guest by guest.FirstName + " " + guest.LastName into guestGroup
+                             orderby guestGroup.Key
+                             select guestGroup;
+
+            var duplicatedNames = new List<string>();
+            foreach (var group in queryNames)
+            {
+                if (group.Count() > 1)
+                    duplicatedNames.Add(group.Key);
+            }
+            return String.Join(", ", duplicatedNames);
         }
 
     }

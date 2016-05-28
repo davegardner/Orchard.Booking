@@ -1,0 +1,44 @@
+﻿@using Orchard.Mvc.Html;
+@using Cascade.Booking.Models;
+
+@{
+    Script.Require("ShapesBase");
+
+    Style.Include("BookingForm.css", "BookingForm.css.min");
+
+    Layout.Title = T("Bookings").ToString();
+}
+
+<h1>My Bookings</h1>
+
+<div class="manage">@Html.ActionLink(T("Add a booking").ToString(), "Add", "Booking", new { }, new { @class = "btn btn-primary" })</div>
+
+<table class="table table-striped booking-bookings" summary="@T("This is a table of the bookings in your application")">
+    <thead>
+        <tr>
+            <th scope="col">@T("Name")</th>
+            <th scope="col">@T("State")</th>
+            <th scope="col" class="big-only">@T("Season")</th>
+            <th scope="col" class="big-only">@T("Number of Guests")</th>
+            <th scope="col" class="big-only">@T("Total")</th>
+            <th scope="col" class="big-only">@T("Action")</th>
+    </thead>
+    @foreach (var booking in Model.Bookings)
+    {
+        IEnumerable<Guest> guests = booking.Guests;
+        <tr>
+            <td>
+                <a href="@Url.Action("Edit", "Booking", new { booking.Id })" title="@booking.Name">@booking.Name</a>
+            </td>
+            <td>@booking.BookingState</td>
+            <td class="big-only">(season)</td>
+            <td class="big-only">@guests.Count().ToString()</td>
+            <td class="big-only">@booking.Total.ToString()</td>
+            <td class="big-only">
+                <div class="action">
+                    <a href="@Url.Action("Edit", "Booking", new { booking.Id })" title="@T("Edit")" class="btn btn-sm btn-info">@T("Edit")</a>
+                </div>
+            </td>
+        </tr>
+    }
+</table>

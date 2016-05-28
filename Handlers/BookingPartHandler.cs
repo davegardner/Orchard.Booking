@@ -11,6 +11,16 @@ namespace Cascade.Booking.Handlers
         {
             Filters.Add(StorageFilter.For(bookingRepository));
         }
+        protected override void GetItemMetadata(GetContentItemMetadataContext context)
+        {
+            var part = context.ContentItem.As<BookingPart>();
+
+            if (part != null)
+            {
+                context.Metadata.Identity.Add("Booking.Name", part.Name);
+                context.Metadata.DisplayText = part.Name;
+            }
+        }
 
     }
 }

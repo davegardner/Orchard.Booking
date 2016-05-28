@@ -188,7 +188,7 @@ namespace Cascade.Booking.Controllers
             {
                 Id = booking.Id,
                 Name = booking.Name,
-                Guests = booking.Guests.Select(g => ConvertToGuestVm(g, bs.GetSeason(g))).ToList(),
+                Guests = booking.Guests.Select(g => bs.ConvertToGuestVm(id, g, bs.GetSeason(g))).ToList(),
                 BookingState = booking.BookingState
             };
             return View(bookingVm);
@@ -214,8 +214,8 @@ namespace Cascade.Booking.Controllers
             return PartialView("EditorTemplates/GuestVm", new GuestVm
             {
                 Sequence = sequence,
-                From = dls.ConvertToLocalizedDateString(clock.UtcNow),
-                To = dls.ConvertToLocalizedDateString(clock.UtcNow + new TimeSpan(1, 0, 0, 0)),
+                From = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(clock.UtcNow) },
+                To = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(clock.UtcNow.AddDays(2.0)) },
                 Category = GuestCategory.Adult
             });
         }
@@ -224,17 +224,15 @@ namespace Cascade.Booking.Controllers
 
         private bool PersistBooking(BookingDetailsViewModel bookingVm)
         {
-         
-
             if (ModelState.IsValid)
             {
                 var bookingPart = bs.Get(bookingVm.Id) ?? cm.Create<BookingPart>("Booking");
                 bookingPart.BookingState = bookingVm.BookingState;
                 bookingPart.Name = bookingVm.Name;
-                bookingPart.Guests = bookingVm.Guests == null ? null : bookingVm.Guests.Where(g => !g.Deleted).Select(g => ConvertToGuest(g)).ToList();
+                bookingPart.Guests = bookingVm.Guests == null ? null : bookingVm.Guests.Where(g => !g.Deleted).Select(g => bs.ConvertToGuest(g)).ToList();
 
                 // Validation
-                if (AreGuestDatesOutOfRange(bookingVm))
+                if (bs.AreGuestDatesOutOfRange(bookingVm))
                 {
                     ModelState.AddModelError("GuestDateOutOfRange", "One or more guest dates are out of range. Have you tried to book a season that hasn't opened?");
                 }
@@ -243,72 +241,12 @@ namespace Cascade.Booking.Controllers
                 bs.SaveOrUpdateBooking(bookingPart);
                 if (bookingPart.Guests.Count() != guestCount)
                 {
-                    var guestNames = DuplicatedGuests(bookingPart);
+                    var guestNames = bs.DuplicatedGuests(bookingPart);
                     Services.Notifier.Information(T("The following guests have been adjusted in booking '" + bookingVm.Name + "' to ensure each guest entry is for a single season: " + guestNames + "." ));
                 }
             }
             return ModelState.IsValid;
         }
 
-        private bool AreGuestDatesOutOfRange(BookingDetailsViewModel bookingVm)
-        {
-            var from = bookingVm.Guests.Min(a => dls.ConvertFromLocalizedDateString(a.From));
-            var to = bookingVm.Guests.Max(a => dls.ConvertFromLocalizedDateString(a.To));
-            var seasons = bs.GetAllSeasons().ToList();
-            if (from < seasons.Min(s => s.From) || to > seasons.Max(s => s.To))
-                return true;
-            return false;
-        }
-
-        private string DuplicatedGuests(BookingPart bookingPart)
-        {
-            var queryNames = from guest in bookingPart.Guests
-                             group guest by guest.FirstName + " " + guest.LastName into guestGroup
-                             orderby guestGroup.Key
-                             select guestGroup;
-
-            var duplicatedNames = new List<string>();
-            foreach (var group in queryNames)
-            {
-                if (group.Count() > 1)
-                    duplicatedNames.Add(group.Key);
-            }
-            return String.Join(", ", duplicatedNames);
-        }
-
-        private GuestVm ConvertToGuestVm(Guest guest, SeasonPart season)
-        {
-            var result = new GuestVm
-            {
-                Id = guest.Id,
-                Sequence = 0,
-                Deleted = false,
-                LastName = guest.LastName,
-                FirstName = guest.FirstName,
-                Category = guest.Category,
-                From = dls.ConvertToLocalizedDateString(guest.From),
-                To = dls.ConvertToLocalizedDateString(guest.To),
-                SeasonName = season == null ? null : season.Title,
-                CostPerNight = guest.CostPerNight
-            };
-            return result;
-        }
-
-        private Guest ConvertToGuest(GuestVm guest)
-        {
-            var result = new Guest
-            {
-                Id = guest.Id,
-                Sequence = 0,
-                Deleted = false,
-                LastName = guest.LastName,
-                FirstName = guest.FirstName,
-                Category = guest.Category,
-                From = dls.ConvertFromLocalizedDateString(guest.From),
-                To = dls.ConvertFromLocalizedDateString(guest.To),
-                CostPerNight = guest.CostPerNight
-            };
-            return result;
-        }
     }
 }

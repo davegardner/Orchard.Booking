@@ -1,0 +1,34 @@
+﻿
+/* Front-end styling */
+
+@border-color: #ccc;
+@border-width: 1px;
+
+table.booking-guests {
+    /*border-radius: 0 0 6px 6px; has no effect on tables when border is collapsed */
+    border: @border-width solid @border-color;
+        
+    caption {
+        border-radius: 6px 6px 0 0;
+        background-color: #eeeeee;
+        border-top: @border-width solid @border-color;
+        border-left: @border-width solid @border-color;
+        border-right: @border-width solid @border-color;
+        /*box-shadow: inset 0px 1px 1px rgba(0,0,0,0.075);*/
+
+        .btn-group {
+            margin-left: .7em;
+        }
+
+        .lead {
+            vertical-align: middle;
+            margin-left: 1em;
+        }
+    }
+
+    @media(max-width:768px) {
+        .big-only {
+            display: none;
+        }
+    }
+}

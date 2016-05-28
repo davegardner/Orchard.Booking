@@ -1,0 +1,68 @@
+﻿@using Orchard.Utility.Extensions;
+@using Cascade.Booking.Models
+
+@{
+    Style.Include("BookingForm.css", "BookingForm.css.min");
+
+    BookingPart Booking = Model.Booking;
+}
+<h1>Booking</h1>
+
+@using (Html.BeginFormAntiForgeryPost(Url.Action("Update", "Booking", new { ReturnUrl="/" }), FormMethod.Post))
+{
+    @Html.HiddenFor(m => Booking.Id);
+
+    <div class="form-group">
+        @Html.LabelFor(m => Booking.Name, "Title", new { })
+        @Html.EditorFor(m => Booking.Name)
+    </div>
+
+    <table class="table table-striped booking-guests">
+        <caption>
+            <div class="btn-group" role="group" aria-label="Guest editing controls">
+                <a class="btn btn-default" href="@Url.Action("Add", "Guest", new { BookingId = Booking.Id })">Add new guest</a>
+            </div>
+            <span class="lead">Please list each guest and their stay:</span>
+        </caption>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th class="big-only">Category</th>
+                <th class="big-only">From</th>
+                <th class="big-only">To</th>
+                <th class="big-only">Per Night</th>
+                <th class="big-only">Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody class="booking-guests">
+            @foreach (var guest in Booking.Guests)
+                {
+                <tr>
+                    <td><a class="btn btn-link" href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">@guest.FirstName @guest.LastName </a></td>
+                    <td class="big-only">@guest.Category</td>
+                    <td class="big-only">@(guest.From.HasValue ? guest.From.Value.ToShortDateString() : "")</td>
+                    <td class="big-only">@(guest.To.HasValue ? guest.To.Value.ToShortDateString() : "")</td>
+                    <td class="big-only">@guest.CostPerNight.ToString()</td>
+                    <td class="big-only">@guest.TotalCost.ToString()</td>
+                    <td>
+                        <a class="btn btn-default" href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">Edit</a>
+                        <a class="btn btn-default" href="@Url.Action("Delete", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="form-group">
+        <button class="btn btn-primary" type="submit">@T("Save booking")</button>
+        <a class="btn btn-info pull-right" type="button"
+           href="@Url.Action("Delete", "Booking", new { Id = Booking.Id, ReturnUrl=ViewContext.RequestContext.HttpContext.Request.ToUrlString() })"
+           itemprop="RemoveUrl UnsafeUrl" onclick='return confirm("Are you sure you want to delete this booking?")'>
+            @T("Delete booking")
+        </a>
+    </div>
+
+}
+
+
+

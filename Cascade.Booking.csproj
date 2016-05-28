@@ -98,13 +98,23 @@
     <Content Include="Assets.json" />
     <Content Include="Assets\Styles.less" />
     <Content Include="Scripts\cascadebooking.js" />
+    <Content Include="Styles\BookingForm.css" />
+    <Content Include="Styles\BookingForm.min.css" />
     <Content Include="Styles\Styles.css" />
     <Content Include="Styles\Styles.min.css" />
+    <Content Include="Assets\BookingForm.less" />
+    <Content Include="Views\Edit.Guest.cshtml" />
+    <None Include="Views\Edit.Booking.cshtml" />
     <Content Include="Web.config" />
     <Content Include="Scripts\Web.config" />
     <Content Include="Styles\Web.config" />
     <Content Include="Properties\AssemblyInfo.cs" />
     <Content Include="Module.txt" />
+    <Content Include="Views\EditorTemplates\Elements.Edit.cshtml" />
+    <Content Include="Views\User.Bookings.cshtml" />
+    <Content Include="Views\EditorTemplates\Elements.Booking.cshtml" />
+    <Content Include="Views\Elements\Booking.cshtml" />
+    <Content Include="Views\Elements\Booking.Design.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Orchard\Orchard.Framework.csproj">
@@ -117,13 +127,27 @@
       <Name>Orchard.Core</Name>
       <Private>false</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Orchard.DynamicForms\Orchard.DynamicForms.csproj">
+      <Project>{82190F52-2901-46D6-8A4C-34649959483F}</Project>
+      <Name>Orchard.DynamicForms</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Orchard.Layouts\Orchard.Layouts.csproj">
+      <Project>{6BD8B2FA-F2E3-4AC8-A4C3-2925A653889A}</Project>
+      <Name>Orchard.Layouts</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdminMenu.cs" />
+    <Compile Include="Bindings\BookingPartBindings.cs" />
     <Compile Include="Controllers\AdminSeasonController.cs" />
     <Compile Include="Controllers\BookingController.cs" />
+    <Compile Include="Controllers\GuestController.cs" />
+    <Compile Include="Drivers\BookingElementDriver.cs" />
     <Compile Include="Drivers\SeasonDriver.cs" />
     <Compile Include="Drivers\BookingDriver.cs" />
+    <Compile Include="Drivers\UserBookingsElementDriver.cs" />
+    <Compile Include="Elements\Booking.cs" />
+    <Compile Include="Elements\UserBookings.cs" />
     <Compile Include="Extensions\HtmlHelperExtensions.cs" />
     <Compile Include="Extensions\HtmlPrefixScopeExtensions.cs" />
     <Compile Include="Extensions\PascalCaseWordSplittingEnumConverter.cs" />
@@ -136,20 +160,24 @@
     <Compile Include="Models\Season.cs" />
     <Compile Include="Migrations.cs" />
     <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Permissions.cs" />
     <Compile Include="ResourceManifest.cs" />
+    <Compile Include="Routes.cs" />
     <Compile Include="Services\BookingService.cs" />
-    <Compile Include="ViewModels\GuestVm.cs" />
-    <Compile Include="ViewModels\SeasonSummaryViewModel.cs" />
-    <Compile Include="ViewModels\SeasonIndexViewModel.cs" />
-    <Compile Include="ViewModels\SeasonIndexOptions.cs" />
-    <Compile Include="ViewModels\SeasonDetailsViewModel.cs" />
+    <Compile Include="ViewModels\BookingDetailsViewModel.cs" />
     <Compile Include="ViewModels\BookingIndexOptions.cs" />
     <Compile Include="ViewModels\BookingIndexViewModel.cs" />
     <Compile Include="ViewModels\BookingSummaryViewModel.cs" />
-    <Compile Include="ViewModels\BookingDetailsViewModel.cs" />
+    <Compile Include="ViewModels\GuestVm.cs" />
+    <Compile Include="ViewModels\SeasonDetailsViewModel.cs" />
+    <Compile Include="ViewModels\SeasonIndexOptions.cs" />
+    <Compile Include="ViewModels\SeasonIndexViewModel.cs" />
+    <Compile Include="ViewModels\SeasonSummaryViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Helpers\" />
+    <Folder Include="Views\Guest\" />
+    <Folder Include="Views\Parts\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Admin\Create.cshtml" />
@@ -162,12 +190,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\EditorTemplates\Parts\Poll.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\Parts\Poll.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\Parts\Poll.Summary.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />

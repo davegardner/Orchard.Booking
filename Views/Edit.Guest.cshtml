@@ -1,0 +1,67 @@
+﻿@using Orchard.Utility.Extensions;
+@using Cascade.Booking.ViewModels
+
+
+@{
+    Style.Require("jQueryUI");
+    Script.Require("jQueryUI_DatePicker");
+    Style.Include("BookingForm.css", "BookingForm.css.min");
+
+    GuestVm Guest = Model.Guest;
+}
+<h1>Guest</h1>
+
+@using (Html.BeginFormAntiForgeryPost(Url.Action("Update", "Guest"), FormMethod.Post))
+{
+    @Html.HiddenFor(m => Guest.Id);
+    @Html.HiddenFor(m => Guest.BookingId);
+
+    <div class="form-group">
+        @Html.LabelFor(m => Guest.FirstName, "First name", new { })
+        @Html.EditorFor(m => Guest.FirstName)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => Guest.LastName, "Last name", new { })
+        @Html.EditorFor(m => Guest.LastName)
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => Guest.Category, "Category", new { })
+        @Html.DropDownListFor(m => Guest.Category, Guest.Categories)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => Guest.From, "From", new { })
+        <input type="datetime" id="@Html.IdFor(m=>Guest.From.Date)" name="@Html.NameFor(m=>Guest.From.Date)" value="@Guest.From.Date"/>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => Guest.To, "To", new { })
+        <input type="datetime" id="@Html.IdFor(m=>Guest.To.Date)" name="@Html.NameFor(m=>Guest.To.Date)" value="@Guest.To.Date" />
+    </div>
+
+    <div class="form-group">
+        <button class="btn btn-primary" type="submit">@T("Save guest")</button>
+        <a class="btn btn-info pull-right" type="button"
+           href="@Url.Action("Delete", "Guest", new { BookingId = Guest.BookingId, GuestId = Guest.Id, ReturnUrl=ViewContext.RequestContext.HttpContext.Request.ToUrlString() })"
+           itemprop="RemoveUrl UnsafeUrl" onclick='return confirm("Are you sure you want to delete this guest?")'>
+            @T("Delete guest")
+        </a>
+
+        @*<a class="btn btn-info pull-right" type="button" href="@Url.Action("Delete", "Guest", new { Guest.Id, Guest.BookingId  })" itemprop="RemoveUrl UnsafeUrl">@T("Delete guest")</a>*@
+    </div>
+
+}
+
+@using (Script.Foot())
+{
+    <script type="text/javascript">
+//<![CDATA[
+        $(function () {
+            $('input[type="datetime"]').datepicker({ dateFormat: "dd/mm/yy", showAnim: "fadeIn" });
+    })
+    //]]>
+    </script>
+}
+
+
+
+
