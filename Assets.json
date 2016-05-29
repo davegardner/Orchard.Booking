@@ -1,11 +1,11 @@
 [
   {
-    "inputs": [ "Assets/Styles.less" ],
-    "output": "Styles/Styles.css"
+    "inputs": [ "Assets/BookingAdmin.less" ],
+    "output": "Styles/BookingAdmin.css"
   },
   {
-    "inputs": [ "Assets/BookingForm.less" ],
-    "output": "Styles/BookingForm.css"
+    "inputs": [ "Assets/Booking.less" ],
+    "output": "Styles/Booking.css"
   }
 
 ]

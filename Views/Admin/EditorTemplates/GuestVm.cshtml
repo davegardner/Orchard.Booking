@@ -19,13 +19,12 @@
     </td>
     <td>
         @Html.DropDownListFor(m=>m.Category, Model.Categories)
-        @*<input type="text" value="@Model.Category" name='@prefix@Html.NameFor(m=>m.Category)' />*@
     </td>
     <td>
-        <input type="datetime" value="@Model.From" name='@prefix@Html.NameFor(m=>m.From)' />
+        <input type="datetime" value="@Model.From.Date" name='@prefix@Html.NameFor(m=>m.From.Date)' />
     </td>
     <td>
-        <input type="datetime" value="@Model.To" name='@prefix@Html.NameFor(m=>m.To)' />
+        <input type="datetime" value="@Model.To.Date" name='@prefix@Html.NameFor(m=>m.To.Date)' />
     </td>
     <td>
         @Html.DisplayFor(m => m.SeasonName)

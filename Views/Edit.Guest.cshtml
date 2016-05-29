@@ -5,16 +5,16 @@
 @{
     Style.Require("jQueryUI");
     Script.Require("jQueryUI_DatePicker");
-    Style.Include("BookingForm.css", "BookingForm.css.min");
+    Style.Require("Booking");
 
     GuestVm Guest = Model.Guest;
 }
 <h1>Guest</h1>
 
-@using (Html.BeginFormAntiForgeryPost(Url.Action("Update", "Guest"), FormMethod.Post))
-{
-    @Html.HiddenFor(m => Guest.Id);
-    @Html.HiddenFor(m => Guest.BookingId);
+@using (Html.BeginFormAntiForgeryPost(Url.Action("Update", "Guest"), FormMethod.Post, new { @class = "edit-guest" }))
+    {
+        @Html.HiddenFor(m => Guest.Id);
+        @Html.HiddenFor(m => Guest.BookingId);
 
     <div class="form-group">
         @Html.LabelFor(m => Guest.FirstName, "First name", new { })
@@ -25,15 +25,15 @@
         @Html.EditorFor(m => Guest.LastName)
     </div>
 
-    <div class="form-group">
+    <div class="form-group category">
         @Html.LabelFor(m => Guest.Category, "Category", new { })
         @Html.DropDownListFor(m => Guest.Category, Guest.Categories)
     </div>
-    <div class="form-group">
+    <div class="form-group date">
         @Html.LabelFor(m => Guest.From, "From", new { })
         <input type="datetime" id="@Html.IdFor(m=>Guest.From.Date)" name="@Html.NameFor(m=>Guest.From.Date)" value="@Guest.From.Date"/>
     </div>
-    <div class="form-group">
+    <div class="form-group date">
         @Html.LabelFor(m => Guest.To, "To", new { })
         <input type="datetime" id="@Html.IdFor(m=>Guest.To.Date)" name="@Html.NameFor(m=>Guest.To.Date)" value="@Guest.To.Date" />
     </div>
@@ -56,8 +56,9 @@
     <script type="text/javascript">
 //<![CDATA[
         $(function () {
-            $('input[type="datetime"]').datepicker({ dateFormat: "dd/mm/yy", showAnim: "fadeIn" });
-    })
+            $('input[type="datetime"]')
+            .datepicker({ showAnim: "fadeIn", dateFormat: "dd/mm/yy", appendText: " (dd/mm/yyyy)" });
+        })
     //]]>
     </script>
 }

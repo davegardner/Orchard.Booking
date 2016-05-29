@@ -6,6 +6,7 @@
     Style.Require("jQueryUI");
     Script.Require("ShapesBase");
     Script.Require("jQueryUI_DatePicker");
+    Style.Require("BookingAdmin");
 
     Layout.Title = T("Edit booking - '").ToString() + Model.Name + "'";
 }
@@ -17,10 +18,10 @@
     <fieldset>
         @Html.HiddenFor(m => m.Id)
         @Html.LabelFor(m => m.Name, T("Name"))
-        @Html.TextBoxFor(m => m.Name, new { @class = "text large", autofocus="autofocus" })
+        @Html.TextBoxFor(m => m.Name, new { @class = "text large", autofocus = "autofocus" })
 
         @*@Html.LabelFor(m => m.Year, T("Year"))
-        @Html.EditorFor(m => m.Year)*@
+            @Html.EditorFor(m => m.Year)*@
 
         @Html.LabelFor(m => m.BookingState, T("Booking State"))
         @Html.EnumDropDownListFor(m => m.BookingState)
@@ -53,26 +54,29 @@
 @using (Script.Foot())
 {
     <script type="text/javascript">
-//<![CDATA[
-    $(function () {
-        $("#addGuest").click(function () {
-            $.ajax({
-                url: '@Url.Action("GetNewGuest")',
-                data: { sequence: $('.booking-guests tr').length },
-                success: function (data) {
-                    $(".booking-guests").append(data);
-                    $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yy" });
-                    $(".booking-guests tr:last-of-type td:first-of-type input[type='text']").focus();
-                }
+        //<![CDATA[
+        $(function () {
+            $("#addGuest").click(function () {
+                $.ajax({
+                    url: '@Url.Action("GetNewGuest")',
+                    data: { sequence: $('.booking-guests tr').length },
+                    success: function (data) {
+                        $(".booking-guests").append(data);
+                        $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yy" });
+                        $(".booking-guests tr:last-of-type td:first-of-type input[type='text']").focus();
+                    }
+                });
             });
-        });
-        //$(".booking-guests").on("click", "a.deleteRow", function () {
-        //    $(this).parents("tr").remove();
-        //    return false;
-        //});
-        $('input[type="datetime"]').datepicker({ showAnim: "", dateFormat: "dd/mm/yy" });
-    })
-    //]]>
+            //$(".booking-guests").on("click", "a.deleteRow", function () {
+            //    $(this).parents("tr").remove();
+            //    return false;
+            //});
+            $('input[type="datetime"]')
+                .datepicker({ showAnim: "", dateFormat: "dd/mm/yy", appendText: "(dd/mm/yyyy" })
+                .css("width", "10em")
+                .css("display", "inline");
+        })
+        //]]>
     </script>
 
 }

@@ -2,7 +2,7 @@
 @using Cascade.Booking.Models
 
 @{
-    Style.Include("BookingForm.css", "BookingForm.css.min");
+    Style.Require("Booking");
 
     BookingPart Booking = Model.Booking;
 }
@@ -27,11 +27,11 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th class="big-only">Category</th>
-                <th class="big-only">From</th>
-                <th class="big-only">To</th>
-                <th class="big-only">Per Night</th>
-                <th class="big-only">Total</th>
+                <th class="visible-sm visible-md visible-lg">Category</th>
+                <th class="visible-sm visible-md visible-lg">From</th>
+                <th class="visible-sm visible-md visible-lg">To</th>
+                <th class="visible-md visible-lg">Per Night</th>
+                <th class="visible-md visible-lg">Total</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -40,11 +40,11 @@
                 {
                 <tr>
                     <td><a class="btn btn-link" href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">@guest.FirstName @guest.LastName </a></td>
-                    <td class="big-only">@guest.Category</td>
-                    <td class="big-only">@(guest.From.HasValue ? guest.From.Value.ToShortDateString() : "")</td>
-                    <td class="big-only">@(guest.To.HasValue ? guest.To.Value.ToShortDateString() : "")</td>
-                    <td class="big-only">@guest.CostPerNight.ToString()</td>
-                    <td class="big-only">@guest.TotalCost.ToString()</td>
+                    <td class="visible-sm visible-md visible-lg">@guest.Category</td>
+                    <td class="visible-sm visible-md visible-lg">@(guest.From.HasValue ? guest.From.Value.ToShortDateString() : "")</td>
+                    <td class="visible-sm visible-md visible-lg">@(guest.To.HasValue ? guest.To.Value.ToShortDateString() : "")</td>
+                    <td class="visible-md visible-lg">@guest.CostPerNight.ToString("f2")</td>
+                    <td class="visible-md visible-lg">@(guest.TotalCost.HasValue ? guest.TotalCost.Value.ToString("f2") : "")</td>
                     <td>
                         <a class="btn btn-default" href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">Edit</a>
                         <a class="btn btn-default" href="@Url.Action("Delete", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">Delete</a>

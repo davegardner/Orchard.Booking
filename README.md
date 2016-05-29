@@ -5,11 +5,11 @@ The main entities are:
 
 ### Booking
 
-A booking has a status (Tentative, Confirmed, etc) and any number of Guests.
+A booking has a status (Tentative, Confirmed, etc) and any number of Guests. Bookings can only be made by registered Members.
 
 ### Guest
 
-A guest arrives on a certain date and departs on a later date. A guest's details are represented by a User.
+A guest arrives on a certain date and departs on a later date. Guests can be anyone.
 
 ### Season
 
