@@ -9,6 +9,8 @@ using Orchard.Security;
 using Orchard.Core.Common.Models;
 using Cascade.Booking.ViewModels;
 using Orchard.Core.Common.ViewModels;
+using System.Collections;
+using Orchard.Services;
 
 namespace Cascade.Booking.Services
 {
@@ -30,12 +32,15 @@ namespace Cascade.Booking.Services
         IEnumerable<SeasonPart> GetAllSeasons();
         SeasonPart GetSeason(int id);
         SeasonPart GetSeason(Guest guest);
+        SeasonPart GetSeason(DateTime date);
+        Decimal GetRate(DateTime date);
         void SaveOrUpdateSeason(SeasonPart seasonPart);
         IEnumerable<BookingPart> GetBookings(IUser user);
         GuestVm ConvertToGuestVm(int bookingId, Guest guest, SeasonPart season);
         Guest ConvertToGuest(GuestVm guest);
         string DuplicatedGuests(BookingPart bookingPart);
         bool AreGuestDatesOutOfRange(BookingDetailsViewModel bookingVm);
+        DateTime TodayUtc();
     }
 
     // Implementation ////////////////////////////////////
@@ -43,17 +48,19 @@ namespace Cascade.Booking.Services
     {
         private readonly IDateLocalizationServices dls;
         private readonly IContentManager cm;
-        public BookingService(IContentManager contentManager, IDateLocalizationServices dateLocationServices)
+        private readonly IClock clock;
+        public BookingService(IContentManager contentManager, IDateLocalizationServices dateLocationServices, IClock orchardClock)
         {
             cm = contentManager;
             dls = dateLocationServices;
+            clock = orchardClock;
         }
 
         public void Delete(int id)
         {
-            var poll = Get(id);
-            if (poll != null)
-                cm.Remove(poll.ContentItem);
+            var booking = Get(id);
+            if (booking != null)
+                cm.Remove(booking.ContentItem);
         }
 
         public void DeleteSeason(int id)
@@ -64,7 +71,7 @@ namespace Cascade.Booking.Services
         public BookingPart Get(int id, IUser user)
         {
             var booking = Get(id);
-            if(booking.As<CommonPart>().Owner.Id != user.Id)
+            if (booking.As<CommonPart>().Owner.Id != user.Id)
                 return null;
             return booking;
         }
@@ -73,7 +80,7 @@ namespace Cascade.Booking.Services
         {
             if (id > 0)
             {
-                return cm.Get<BookingPart>(id);
+                return cm.Get<BookingPart>(id, VersionOptions.Latest);
             }
             return null;
         }
@@ -81,14 +88,15 @@ namespace Cascade.Booking.Services
         public IEnumerable<BookingPart> GetAllBookings(int year = 0)
         {
             IEnumerable<BookingPart> bookings;
-            bookings = cm.Query<BookingPart, BookingRecord>().List();
+            bookings = cm.Query<BookingPart, BookingRecord>(VersionOptions.Published).List();
             return bookings;
         }
 
         public IEnumerable<SeasonPart> GetAllSeasons()
         {
+            // TODO cache the list of seasons
             return cm.Query<SeasonPart, SeasonRecord>()
-                .OrderByDescending(s=>s.FromDate)
+                .OrderByDescending(s => s.FromDate)
                 .List();
         }
 
@@ -104,9 +112,28 @@ namespace Cascade.Booking.Services
         {
             if (guest == null)
                 return null;
-            var seasons = GetAllSeasons();
             var from = guest.From;
-            return seasons.FirstOrDefault(s => s.From <= from && from  < s.To);
+            return GetSeason(from.Value);
+        }
+
+        public SeasonPart GetSeason(DateTime date)
+        {
+            if (date == null)
+                return null;
+            var seasons = GetAllSeasons();
+            return seasons.FirstOrDefault(s => s.From <= date && date <= s.To);
+        }
+
+        public Decimal GetRate(DateTime date)
+        {
+            if (date == null)
+                return 0.0m;
+
+            var season = GetSeason(date);
+            if (season == null)
+                return 0.0m;
+
+            return season.Rate;
         }
 
         public void NormalizeGuestBookings(BookingPart booking)
@@ -121,7 +148,12 @@ namespace Cascade.Booking.Services
 
         public void SaveOrUpdateBooking(BookingPart bookingPart)
         {
-            NormalizeGuestBookings(bookingPart);
+            //NormalizeGuestBookings(bookingPart);
+
+            // force serialization
+            //bookingPart.Record.RawGuests = Guest.Serialize(bookingPart.Guests);
+            bookingPart.Guests = bookingPart.Guests;
+
             cm.Publish(bookingPart.ContentItem);
         }
 
@@ -164,13 +196,13 @@ namespace Cascade.Booking.Services
 
             // Get a list of seasons that are partly or wholly covered by this guest booking
             var coveredSeasons = seasons
-                .Where(s => guestFrom  <= s.From && s.To <= guestTo     // totally enclosed
+                .Where(s => guestFrom <= s.From && s.To <= guestTo     // totally enclosed
                     || s.From <= guestFrom && guestFrom <= s.To         // start season
                     || s.From <= guestTo && guestTo <= s.To)            // end season
                 .OrderBy(s => s.From);
 
             // poor-man's id initialization
-            var index = guestList.Count > 0 ? guestList.Max(g=>g.Id) : 0;
+            var index = guestList.Count > 0 ? guestList.Max(g => g.Id) : 0;
 
             // create one guest record per covered season
             guestList.AddRange(coveredSeasons.Select(s => new Guest
@@ -205,6 +237,23 @@ namespace Cascade.Booking.Services
 
         public GuestVm ConvertToGuestVm(int bookingId, Guest guest, SeasonPart season)
         {
+            IList<DayVm> days = null;
+            if (guest.Days != null && guest.Days.Count() > 0)
+            {
+                days = guest.Days.Select(d => new DayVm
+                {
+                    Cost = d.Cost,
+                    Date = new DateTimeEditor
+                    {
+                        Date = dls.ConvertToLocalizedDateString(d.Date),
+                        ShowDate = true,
+                        ShowTime = false
+                    },
+                    Coupon = d.Coupon,
+                    Id = d.Id
+                }).ToList();
+            }
+
             var result = new GuestVm
             {
                 Id = guest.Id,
@@ -217,13 +266,26 @@ namespace Cascade.Booking.Services
                 From = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(guest.From) },
                 To = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(guest.To) },
                 SeasonName = season == null ? null : season.Title,
-                CostPerNight = guest.CostPerNight
+                CostPerNight = guest.CostPerNight,
+                Days = days
             };
             return result;
         }
 
         public Guest ConvertToGuest(GuestVm guest)
         {
+            IEnumerable<Day> days = null;
+            if (guest.Days != null && guest.Days.Count() > 0)
+            {
+                days = guest.Days.Select(d => new Day
+                {
+                    Id = d.Id,
+                    Coupon = d.Coupon,
+                    Cost = d.Cost,
+                    Date = dls.ConvertFromLocalizedDateString(d.Date.Date)
+                });
+            }
+
             var result = new Guest
             {
                 Id = guest.Id,
@@ -234,7 +296,8 @@ namespace Cascade.Booking.Services
                 Category = guest.Category,
                 From = dls.ConvertFromLocalizedDateString(guest.From.Date),
                 To = dls.ConvertFromLocalizedDateString(guest.To.Date),
-                CostPerNight = guest.CostPerNight
+                CostPerNight = guest.CostPerNight,
+                Days = days
             };
             return result;
         }
@@ -265,5 +328,12 @@ namespace Cascade.Booking.Services
             return String.Join(", ", duplicatedNames);
         }
 
+        public DateTime TodayUtc()
+        {
+            var dateTodayLocal = DateTime.Now.Date;
+            var todayUtc = dateTodayLocal.ToUniversalTime();
+            return todayUtc;
+
+        }
     }
 }

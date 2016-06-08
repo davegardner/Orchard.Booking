@@ -1,0 +1,65 @@
+﻿@using Orchard.Utility.Extensions;
+@using Cascade.Booking.ViewModels
+
+
+@{
+    Style.Require("jQueryUI");
+    Script.Require("jQueryUI_DatePicker");
+    Style.Require("Booking");
+
+    GuestVm Guest = Model.Guest;
+
+    var returnUrl = Url.Action("Edit", "Guest", new { BookingId = Guest.BookingId, GuestId = Guest.Id });
+
+}
+
+
+<h1>Coupons</h1>
+
+@using (Html.BeginFormAntiForgeryPost(Url.Action("Update", "Guest", new { ReturnUrl = returnUrl }), FormMethod.Post, new { @class = "edit-guest" }))
+{
+    // needed because we post back to the same action as Edit.Guest
+    // effectively, this is an alternate view for the Guest/Update action
+    @Html.HiddenFor(m => Guest.Id);
+    @Html.HiddenFor(m => Guest.BookingId);
+    @Html.HiddenFor(m => Guest.FirstName)
+    @Html.HiddenFor(m => Guest.LastName)
+    @Html.HiddenFor(m => Guest.Category)
+    @Html.HiddenFor(m => Guest.From.Date)
+    @Html.HiddenFor(m => Guest.To.Date)
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Apply Coupon?</th>
+                <th>Cost per night</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (var i = 0; i < Guest.Days.Count(); i++)
+            {
+                <tr>
+                    <td>
+                        @Html.HiddenFor(m => Guest.Days[i].Id)
+                        @Html.HiddenFor(m => Guest.Days[i].Date.Date)
+                        @Html.HiddenFor(m => Guest.Days[i].Cost)
+                        @Guest.Days[i].Date.Date
+                    </td>
+                    <td>@Html.CheckBoxFor(m => Guest.Days[i].Coupon) </td>
+                    <td>@Guest.Days[i].Cost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="form-group">
+        <button class="btn btn-primary" type="submit">@T("Save guest")</button>
+        <a class="btn btn-info pull-right" href="@returnUrl">Cancel</a>
+    </div>
+
+}
+
+
+
+

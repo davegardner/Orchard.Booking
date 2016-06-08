@@ -18,10 +18,9 @@
         <tr>
             <th scope="col">@T("Name")</th>
             <th scope="col">@T("State")</th>
-            <th scope="col" class=" visible-sm visible-md visible-lg">@T("Season")</th>
-            <th scope="col" class=" visible-sm visible-md visible-lg">@T("Number of Guests")</th>
-            <th scope="col" class=" visible-sm visible-md visible-lg">@T("$ Total")</th>
-            <th scope="col" class=" visible-sm visible-md visible-lg">@T("Action")</th>
+            <th scope="col" class="visible-sm visible-md visible-lg">@T("Number of Guests")</th>
+            <th scope="col" class="visible-sm visible-md visible-lg text-right">@T("$ Total")</th>
+            <th scope="col" class="visible-sm visible-md visible-lg">@T("Action")</th>
     </thead>
     @foreach (var booking in Model.Bookings)
     {
@@ -31,10 +30,9 @@
                 <a href="@Url.Action("Edit", "Booking", new { booking.Id })" title="@booking.Name">@booking.Name</a>
             </td>
             <td>@booking.BookingState</td>
-            <td class=" visible-sm visible-md visible-lg">(season)</td>
-            <td class=" visible-sm visible-md visible-lg">@guests.Count().ToString()</td>
-            <td class=" visible-sm visible-md visible-lg">@booking.Total.ToString("f2")</td>
-            <td class=" visible-sm visible-md visible-lg">
+            <td class="visible-sm visible-md visible-lg">@guests.Count().ToString()</td>
+            <td class="visible-sm visible-md visible-lg text-right">@booking.Total.ToString("f2")</td>
+            <td class="visible-sm visible-md visible-lg">
                 <div class="action">
                     <a href="@Url.Action("Edit", "Booking", new { booking.Id })" title="@T("Edit")" class="btn btn-sm btn-info">@T("Edit")</a>
                 </div>

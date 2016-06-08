@@ -1,5 +1,6 @@
 ﻿using Orchard.ContentManagement;
 using Orchard.ContentManagement.Records;
+using Orchard.Data.Conventions;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,8 +9,8 @@ namespace Cascade.Booking.Models
     public class BookingRecord : ContentPartRecord
     {
         public virtual string Name { get; set; }
+        [StringLengthMax]
         public virtual string RawGuests { get; set; }
-        //public virtual int Year { get; set; }
         public virtual BookingState BookingState { get; set;}
     }
 
@@ -20,11 +21,7 @@ namespace Cascade.Booking.Models
             get { return Retrieve(r => r.Name); }
             set { Store(r => r.Name, value); }
         }
-        //public int Year
-        //{
-        //    get { return Retrieve(r => r.Year); }
-        //    set { Store(r => r.Year, value); }
-        //}
+
         public BookingState BookingState
         {
             get { return Retrieve(r => r.BookingState); }
@@ -48,21 +45,5 @@ namespace Cascade.Booking.Models
         {
             get { return Guests.Sum(g => g.TotalCost); }
         }
-        /// <summary>
-        /// Lazyloaded Season Part
-        /// </summary>
-        //private SeasonPart _seasonPart;
-        //public  SeasonPart SeasonPart
-        //{
-        //    get {
-        //        var earliestDate = Guests.OrderBy(g => g.From).First().From;
-        //        var lastDate = Guests.OrderBy(g => g.To).Last().To;
-
-        //        return _seasonPart ?? (_seasonPart = ContentItem.ContentManager.Query<SeasonPart, SeasonRecord>()
-        //            .Where(s => s.From > earliestDate && s.To < lastDate)
-        //            .List()
-        //            .FirstOrDefault());
-        //    }
-        //}
     }
 }

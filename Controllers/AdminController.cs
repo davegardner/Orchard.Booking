@@ -214,8 +214,8 @@ namespace Cascade.Booking.Controllers
             return PartialView("EditorTemplates/GuestVm", new GuestVm
             {
                 Sequence = sequence,
-                From = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(clock.UtcNow) },
-                To = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(clock.UtcNow.AddDays(2.0)) },
+                From = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(bs.TodayUtc().AddDays(1.0)) },
+                To = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(bs.TodayUtc().AddDays(3.0)) },
                 Category = GuestCategory.Adult
             });
         }

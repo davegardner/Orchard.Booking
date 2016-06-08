@@ -100,9 +100,9 @@ namespace Cascade.Booking.Controllers
             if (!Services.Authorizer.Authorize(Permissions.AddBooking, T("Please log in ")))
                 return Redirect("~/Users/Account/AccessDenied?ReturnUrl=~/Booking/Bookings");
 
-            // Actually create the ContextItem so it has an Id
+            // Actually create the ContextItem so it has an Id, but make it a draft
             var booking = cm.New<BookingPart>("Booking");
-            cm.Create(booking.ContentItem);
+            cm.Create(booking.ContentItem, VersionOptions.Draft);
 
             var shape = sf.Edit_Booking(
                 Booking: booking
@@ -150,26 +150,28 @@ namespace Cascade.Booking.Controllers
             if (!Services.Authorizer.Authorize(Permissions.AddBooking, T("Please log in ")))
                 return Redirect("~/Users/Account/AccessDenied?ReturnUrl=~/Booking/Bookings");
 
-            //bool newBooking = Booking.Id == 0;
-
             BookingPart booking = null;
-            //if (newBooking)
-            //    booking = cm.New<BookingPart>("Booking");
-            //else
-            //{
-                booking = bs.Get(Booking.Id, Services.WorkContext.CurrentUser);
-                if (booking == null)
-                    return Redirect("~/Users/Account/AccessDenied?ReturnUrl=~/Booking/Bookings");
-            //}
+            booking = bs.Get(Booking.Id, Services.WorkContext.CurrentUser);
+            if (booking == null)
+                return Redirect("~/Users/Account/AccessDenied?ReturnUrl=~/Booking/Bookings");
 
             booking.Name = Booking.Name;
             booking.BookingState = Booking.BookingState;
 
-            //if (newBooking)
-            //    cm.Create(booking.ContentItem);
+            // newly added items need to be published
+            cm.Publish(booking.ContentItem);
+
+
+            // NOTE: if they clicked 'add guest' then we now have a saved booking that we can
+            // add a guest to, so go do that
+            if (this.Request.Form["submit.AddGuest"] != null)
+            {
+                return RedirectToAction("Add", "Guest", new { BookingId = Booking.Id });
+            }
 
             Services.Notifier.Add(Orchard.UI.Notify.NotifyType.Information, T("Booking '{0}' saved.", booking.Name));
 
+            // just an ordinary save, so redisplay the list of their bookings
             return RedirectToAction("Bookings");
         }
     }

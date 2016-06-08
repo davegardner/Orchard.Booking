@@ -44,21 +44,21 @@
             @foreach (var season in Model.Seasons)
             {
                 var seasonClass = "";
-                <tr itemscope itemid="@season.Part.Id" itemtype="http://orchardproject.net/data/Season" class="@seasonClass">
+                <tr itemscope itemid="@season.Id" itemtype="http://orchardproject.net/data/Season" class="@seasonClass">
                     <td>
-                        <input type="hidden" value="@season.Part.Id" name="@Html.NameOf(m => m.Seasons[seasonIndex].Part.Id)" />
+                        <input type="hidden" value="@season.Id" name="@Html.NameOf(m => m.Seasons[seasonIndex].Id)" />
                         <input type="checkbox" value="true" name="@Html.NameOf(m => m.Seasons[seasonIndex].IsChecked)" />
                     </td>
                     <td>
-                        <a href="@Url.Action("Edit", new { season.Part.Id })" title="@season.Part.Title">@season.Part.Title</a>
+                        <a href="@Url.Action("Edit", new { season.Id })" title="@season.Title">@season.Title</a>
                     </td>
-                    <td>@season.Part.From.ToLocalTime().ToShortDateString()</td>
-                    <td>@season.Part.To.ToLocalTime().ToShortDateString()</td>
-                    <td>@season.Part.Rate.ToString()</td>
+                    <td>@season.From.Date</td>
+                    <td>@season.To.Date</td>
+                    <td>@season.Rate.ToString()</td>
                     <td>
                         <div class="actions">
-                            <a href="@Url.Action("Edit", new { season.Part.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")
-                            <a href="@Url.Action("Delete", new { season.Part.Id, returnUrl = ViewContext.RequestContext.HttpContext.Request.ToUrlString() })" itemprop="RemoveUrl UnsafeUrl">@T("Delete")</a>
+                            <a href="@Url.Action("Edit", new { season.Id })" title="@T("Edit")">@T("Edit")</a>@T(" | ")
+                            <a href="@Url.Action("Delete", new { season.Id, returnUrl = ViewContext.RequestContext.HttpContext.Request.ToUrlString() })" itemprop="RemoveUrl UnsafeUrl">@T("Delete")</a>
                         </div>
                     </td>
                 </tr>

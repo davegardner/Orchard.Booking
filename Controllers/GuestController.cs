@@ -10,6 +10,8 @@ using Orchard.Localization.Services;
 using Orchard.Mvc;
 using Orchard.Services;
 using Orchard.Themes;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -44,15 +46,25 @@ namespace Cascade.Booking.Controllers
             if (booking == null || !Services.Authorizer.Authorize(Permissions.AddBooking, T("Please log in ")))
                 return Redirect("~/Users/Account/AccessDenied?ReturnUrl=~/Booking/Bookings");
 
-            var today = clock.UtcNow;
+            var today = bs.TodayUtc();
             var season = bs.GetAllSeasons().FirstOrDefault(s => s.From <= today && today <= s.To);
 
             var vm = new GuestVm
             {
                 // reasonable defaults
                 SeasonName = season.Title,
-                From = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(clock.UtcNow) },
-                To = new DateTimeEditor { ShowDate = true, ShowTime = false, Date = dls.ConvertToLocalizedDateString(clock.UtcNow.AddDays(2.0)) },
+                From = new DateTimeEditor
+                {
+                    ShowDate = true,
+                    ShowTime = false,
+                    Date = dls.ConvertToLocalizedDateString(today.AddDays(1.0))
+                },
+                To = new DateTimeEditor
+                {
+                    ShowDate = true,
+                    ShowTime = false,
+                    Date = dls.ConvertToLocalizedDateString(today.AddDays(3.0))
+                },
                 Category = GuestCategory.Adult,
                 CostPerNight = season.Rate,
                 BookingId = booking.Id
@@ -76,15 +88,13 @@ namespace Cascade.Booking.Controllers
             var season = bs.GetSeason(guest);
             var vm = bs.ConvertToGuestVm(BookingId, guest, season);
 
-            var shape = sf.Edit_Guest(
-                Guest: vm
-            );
+            var shape = sf.Edit_Guest(Guest: vm);
 
             return new ShapeResult(this, shape);
         }
 
         [HttpPost]
-        public ActionResult Update(GuestVm Guest, string ReturnUrl)
+        public ActionResult Update(GuestVm Guest, string ReturnUrl = null)
         {
             var booking = bs.Get(Guest.BookingId, Services.WorkContext.CurrentUser);
             if (booking == null || !Services.Authorizer.Authorize(Permissions.AddBooking, T("Please log in ")))
@@ -93,8 +103,11 @@ namespace Cascade.Booking.Controllers
             var guest = booking.Guests.FirstOrDefault(g => g.Id == Guest.Id);
             if (guest == null || guest.Id == 0)
             {
+                // get new id
+                var id = booking.Guests.Count() == 0 ? 1 : booking.Guests.Max(b => b.Id) + 1;
+
                 // add a new guest
-                guest = new Guest();
+                guest = new Guest { Id = id };
                 var guestList = booking.Guests.ToList();
                 guestList.Add(guest);
                 booking.Guests = guestList;
@@ -105,9 +118,30 @@ namespace Cascade.Booking.Controllers
             guest.LastName = Guest.LastName;
             guest.From = dls.ConvertFromLocalizedDateString(Guest.From.Date);
             guest.To = dls.ConvertFromLocalizedDateString(Guest.To.Date);
+            if (Guest.Days != null)
+            {
+                guest.Days = Guest.Days.Select(d => new Day
+                {
+                    Id = d.Id,
+                    Coupon = d.Coupon,
+                    Cost = d.Cost,
+                    Date = dls.ConvertFromLocalizedDateString(d.Date.Date)
+                });
+            }
+            else
+                guest.Days = new List<Day>();
 
-            bs.NormalizeGuestBookings(booking);
-            return RedirectToAction("Edit", "Booking", new { Id = booking.Id});
+            bs.SaveOrUpdateBooking(booking);
+
+            if (this.Request.Form["submit.applyCoupons"] != null)
+            {
+                return RedirectToAction("Coupons", "Guest", new { BookingId = booking.Id, GuestId = guest.Id });
+            }
+
+            if (string.IsNullOrWhiteSpace(ReturnUrl))
+                return RedirectToAction("Edit", "Booking", new { Id = booking.Id });
+
+            return Redirect(ReturnUrl);
         }
 
         public ActionResult Delete(int BookingId, int GuestId)
@@ -122,6 +156,81 @@ namespace Cascade.Booking.Controllers
             booking.Guests = guestList;
 
             return RedirectToAction("Edit", "Booking", new { booking.Id });
+        }
+
+        [Themed]
+        public ActionResult Coupons(int BookingId, int GuestId)
+        {
+            var booking = bs.Get(BookingId, Services.WorkContext.CurrentUser);
+            if (booking == null || !Services.Authorizer.Authorize(Permissions.AddBooking, T("Please log in ")))
+                return Redirect("~/Users/Account/AccessDenied?ReturnUrl=~/Booking/Bookings");
+
+            var from = bs.TodayUtc();
+            var defaultRate = bs.GetRate(from);
+            var guest = booking.Guests.FirstOrDefault(g => g.Id == GuestId);
+            if (guest == null)
+                guest = new Guest
+                {
+                    FirstName = "Guest",
+                    From = from,
+                    To = from.AddDays(2),
+                    CostPerNight = defaultRate,
+                    Days = new List<Day>()
+                };
+            var season = bs.GetSeason(guest);
+            var vm = bs.ConvertToGuestVm(BookingId, guest, season);
+
+            // Assumption: Date Range (From to) has been correctly set up
+            if (!guest.From.HasValue || !guest.To.HasValue
+                || guest.From.Value > guest.To.Value)
+                throw new InvalidOperationException("Invalid Guest From/To dates");
+
+            // Create a set of days corresponding to the date range and then
+            // initialze set members to either existing values, or if no existing value
+            // then the default.
+            var days = new List<Day>();
+            int numDays = (guest.To.Value - guest.From.Value).Days;
+            var existingDays = guest.Days.ToDictionary(d => d.Date);
+            for (int i = 0; i < numDays; i++)
+            {
+                var date = guest.From.Value.AddDays(i);
+                var day = new Day
+                {
+                    Id = i,
+                    Date = date,
+                    Cost = bs.GetRate(date),
+                    Coupon = false
+                };
+                Day exDay = null;
+                existingDays.TryGetValue(day.Date, out exDay);
+                if (exDay != null)
+                {
+                    day.Cost = exDay.Cost;
+                    day.Coupon = exDay.Coupon;
+                }
+                days.Add(day);
+            }
+
+            vm.Days = days.Select(d =>
+                new DayVm
+                {
+                    Cost = d.Cost,
+                    Date = new DateTimeEditor
+                    {
+                        Date = dls.ConvertToLocalizedDateString(d.Date),
+                        ShowDate = true,
+                        ShowTime = false
+                    },
+                    Coupon = d.Coupon,
+                    Id = d.Id
+                }
+            ).ToList();
+
+            var shape = sf.Edit_Coupons(
+                Guest: vm
+            );
+
+            return new ShapeResult(this, shape);
         }
     }
 }

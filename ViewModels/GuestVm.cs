@@ -26,6 +26,8 @@ namespace Cascade.Booking.ViewModels
             get { return CostPerNight * NumberOfNights; }
         }
 
+        public IList<DayVm> Days { get; set; }
+
         public int? NumberOfNights
         {
             get

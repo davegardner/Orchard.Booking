@@ -116,6 +116,7 @@
     <Content Include="Views\EditorTemplates\Elements.Booking.cshtml" />
     <Content Include="Views\Elements\Booking.cshtml" />
     <Content Include="Views\Elements\Booking.Design.cshtml" />
+    <Content Include="Views\Edit.Coupons.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Orchard\Orchard.Framework.csproj">
@@ -156,6 +157,7 @@
     <Compile Include="Handlers\BookingPartHandler.cs" />
     <Compile Include="Models\Booking.cs" />
     <Compile Include="Models\BookingState.cs" />
+    <Compile Include="Models\Day.cs" />
     <Compile Include="Models\Guest.cs" />
     <Compile Include="Models\GuestCategory.cs" />
     <Compile Include="Models\Season.cs" />
@@ -169,6 +171,7 @@
     <Compile Include="ViewModels\BookingIndexOptions.cs" />
     <Compile Include="ViewModels\BookingIndexViewModel.cs" />
     <Compile Include="ViewModels\BookingSummaryViewModel.cs" />
+    <Compile Include="ViewModels\DayVm.cs" />
     <Compile Include="ViewModels\GuestVm.cs" />
     <Compile Include="ViewModels\SeasonDetailsViewModel.cs" />
     <Compile Include="ViewModels\SeasonIndexOptions.cs" />
@@ -177,7 +180,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Helpers\" />
-    <Folder Include="Views\Guest\" />
     <Folder Include="Views\Parts\" />
   </ItemGroup>
   <ItemGroup>

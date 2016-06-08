@@ -20,9 +20,10 @@
     <table class="table table-striped booking-guests">
         <caption>
             <div class="btn-group" role="group" aria-label="Guest editing controls">
-                <a class="btn btn-default" href="@Url.Action("Add", "Guest", new { BookingId = Booking.Id })">Add new guest</a>
+                <button class="btn btn-default" type="submit" name="submit.AddGuest">@T("Add a Guest")</button>
             </div>
-            <span class="lead">Please list each guest and their stay:</span>
+            <span class="lead visible-xs-inline visible-sm-inline">Guests:</span>
+            <span class="lead visible-md-inline visible-lg-inline">Please list each guest and their stay:</span>
         </caption>
         <thead>
             <tr>
@@ -30,7 +31,7 @@
                 <th class="visible-sm visible-md visible-lg">Category</th>
                 <th class="visible-sm visible-md visible-lg">From</th>
                 <th class="visible-sm visible-md visible-lg">To</th>
-                <th class="visible-md visible-lg">Per Night</th>
+                <th class="visible-md visible-lg">Number of nights</th>
                 <th class="visible-md visible-lg">Total</th>
                 <th>Actions</th>
             </tr>
@@ -39,11 +40,11 @@
             @foreach (var guest in Booking.Guests)
                 {
                 <tr>
-                    <td><a class="btn btn-link" href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">@guest.FirstName @guest.LastName </a></td>
+                    <td><a href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">@guest.FirstName @guest.LastName </a></td>
                     <td class="visible-sm visible-md visible-lg">@guest.Category</td>
                     <td class="visible-sm visible-md visible-lg">@(guest.From.HasValue ? guest.From.Value.ToShortDateString() : "")</td>
                     <td class="visible-sm visible-md visible-lg">@(guest.To.HasValue ? guest.To.Value.ToShortDateString() : "")</td>
-                    <td class="visible-md visible-lg">@guest.CostPerNight.ToString("f2")</td>
+                    <td class="visible-md visible-lg">@guest.NumberOfNights</td>
                     <td class="visible-md visible-lg">@(guest.TotalCost.HasValue ? guest.TotalCost.Value.ToString("f2") : "")</td>
                     <td>
                         <a class="btn btn-default" href="@Url.Action("Edit", "Guest", new { BookingId = Booking.Id, GuestId = guest.Id })">Edit</a>
@@ -54,8 +55,9 @@
         </tbody>
     </table>
     <div class="form-group">
-        <button class="btn btn-primary" type="submit">@T("Save booking")</button>
-        <a class="btn btn-info pull-right" type="button"
+        <button class="btn btn-primary" type="submit" name="submit.Update">@T("Save booking")</button>
+
+        <a class="btn btn-danger pull-right" type="button"
            href="@Url.Action("Delete", "Booking", new { Id = Booking.Id, ReturnUrl=ViewContext.RequestContext.HttpContext.Request.ToUrlString() })"
            itemprop="RemoveUrl UnsafeUrl" onclick='return confirm("Are you sure you want to delete this booking?")'>
             @T("Delete booking")

@@ -9,12 +9,14 @@
 
     GuestVm Guest = Model.Guest;
 }
+
 <h1>Guest</h1>
 
 @using (Html.BeginFormAntiForgeryPost(Url.Action("Update", "Guest"), FormMethod.Post, new { @class = "edit-guest" }))
-    {
-        @Html.HiddenFor(m => Guest.Id);
-        @Html.HiddenFor(m => Guest.BookingId);
+{
+    @Html.HiddenFor(m => Guest.Id);
+    @Html.HiddenFor(m => Guest.BookingId);
+    @Html.HiddenFor(m => Guest.CostPerNight);
 
     <div class="form-group">
         @Html.LabelFor(m => Guest.FirstName, "First name", new { })
@@ -31,7 +33,7 @@
     </div>
     <div class="form-group date">
         @Html.LabelFor(m => Guest.From, "From", new { })
-        <input type="datetime" id="@Html.IdFor(m=>Guest.From.Date)" name="@Html.NameFor(m=>Guest.From.Date)" value="@Guest.From.Date"/>
+        <input type="datetime" id="@Html.IdFor(m=>Guest.From.Date)" name="@Html.NameFor(m=>Guest.From.Date)" value="@Guest.From.Date" />
     </div>
     <div class="form-group date">
         @Html.LabelFor(m => Guest.To, "To", new { })
@@ -40,26 +42,41 @@
 
     <div class="form-group">
         <button class="btn btn-primary" type="submit">@T("Save guest")</button>
-        <a class="btn btn-info pull-right" type="button"
+        <a class="btn btn-danger pull-right" type="button"
            href="@Url.Action("Delete", "Guest", new { BookingId = Guest.BookingId, GuestId = Guest.Id, ReturnUrl=ViewContext.RequestContext.HttpContext.Request.ToUrlString() })"
-           itemprop="RemoveUrl UnsafeUrl" onclick='return confirm("Are you sure you want to delete this guest?")'>
+           itemprop="RemoveUrl UnsafeUrl" oncoptionck='return confirm("Are you sure you want to delete this guest?")'>
             @T("Delete guest")
         </a>
 
-        @*<a class="btn btn-info pull-right" type="button" href="@Url.Action("Delete", "Guest", new { Guest.Id, Guest.BookingId  })" itemprop="RemoveUrl UnsafeUrl">@T("Delete guest")</a>*@
+        <button class="btn btn-info" type="submit" name="submit.applyCoupons"><i class='fa fa-ellipsis-v fa-lg'></i> @T("Coupons")</button>
+
     </div>
 
+    if (Guest.Days != null)
+    {
+        <div class="form-group">
+            @for (var i = 0; i < Guest.Days.Count(); i++)
+            {
+                @Html.HiddenFor(m => Guest.Days[i].Id)
+                @Html.HiddenFor(m => Guest.Days[i].Date.Date)
+                @Html.HiddenFor(m => Guest.Days[i].Cost)
+                @Html.HiddenFor(m => Guest.Days[i].Coupon)
+            }
+        </div>
+    }
 }
 
 @using (Script.Foot())
 {
     <script type="text/javascript">
-//<![CDATA[
+        //<![CDATA[
         $(function () {
             $('input[type="datetime"]')
             .datepicker({ showAnim: "fadeIn", dateFormat: "dd/mm/yy", appendText: " (dd/mm/yyyy)" });
+
+            $("#selectable").selectable();
         })
-    //]]>
+        //]]>
     </script>
 }
 

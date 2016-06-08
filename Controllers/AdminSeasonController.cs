@@ -63,7 +63,7 @@ namespace Cascade.Booking.Controllers
                     case SeasonBulkAction.Delete:
                         foreach (var seasonSummaryViewModel in checkedEntries)
                         {
-                            bs.DeleteSeason(seasonSummaryViewModel.Part.Id);
+                            bs.DeleteSeason(seasonSummaryViewModel.Id);
                         }
                         break;
                     default:
@@ -101,19 +101,20 @@ namespace Cascade.Booking.Controllers
                     //    break;
             }
 
-            seasons = seasons.OrderByDescending(p => p.Id)
+            model.Seasons = seasons.OrderByDescending(p => p.Id)
                 .Skip(pager.GetStartIndex())
-                .Take(pager.PageSize);
-
-            foreach (var season in seasons.ToList())
-            {
-                var seasonModel = new SeasonSummaryViewModel
+                .Take(pager.PageSize)
+                .Select(p => new SeasonSummaryViewModel
                 {
-                    Part = season,
-                    IsChecked = false
-                };
-                model.Seasons.Add(seasonModel);
-            }
+                    IsChecked = false,
+                    Id = p.Id,
+                    From = new DateTimeEditor { Date = dls.ConvertToLocalizedDateString(p.From), ShowDate = true, ShowTime = false },
+                    To = new DateTimeEditor { Date = dls.ConvertToLocalizedDateString(p.To), ShowDate = true, ShowTime = false },
+                    Title = p.Title,
+                    Rate = p.Rate
+                })
+                .ToList();
+
             model.Pager = Shape.Pager(pager).TotalItemCount(bs.GetAllSeasons().Count());
             model.Options = options;
             return View(model);
@@ -204,8 +205,8 @@ namespace Cascade.Booking.Controllers
             {
                 try
                 {
-                    var from = dls.ConvertFromLocalizedString(seasonDetailsVm.From.Date + " " + "00:00:00").Value;
-                    var to = dls.ConvertFromLocalizedString(seasonDetailsVm.To.Date + " " + "00:00:00").Value;
+                    var from = dls.ConvertFromLocalizedString(seasonDetailsVm.From.Date).Value;
+                    var to = dls.ConvertFromLocalizedString(seasonDetailsVm.To.Date).Value;
                     var seasonPart = bs.GetSeason(seasonDetailsVm.Id) ?? cm.Create<SeasonPart>("Season");
                     seasonPart.Title = seasonDetailsVm.Title;
                     seasonPart.From = from;
