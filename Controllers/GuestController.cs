@@ -117,7 +117,12 @@ namespace Cascade.Booking.Controllers
             guest.FirstName = Guest.FirstName;
             guest.LastName = Guest.LastName;
             guest.From = dls.ConvertFromLocalizedDateString(Guest.From.Date);
-            guest.To = dls.ConvertFromLocalizedDateString(Guest.To.Date);
+
+            // to checkout time
+            Guest.To.ShowDate = true;
+            Guest.To.ShowTime = true;
+            guest.To = dls.ConvertFromLocalizedString(Guest.To.Date + " 09:59:59");
+
             if (Guest.Days != null)
             {
                 guest.Days = Guest.Days.Select(d => new Day
@@ -189,7 +194,7 @@ namespace Cascade.Booking.Controllers
             // initialze set members to either existing values, or if no existing value
             // then the default.
             var days = new List<Day>();
-            int numDays = (guest.To.Value - guest.From.Value).Days;
+            int numDays = guest.NumberOfNights ?? 0;
             var existingDays = guest.Days.ToDictionary(d => d.Date);
             for (int i = 0; i < numDays; i++)
             {

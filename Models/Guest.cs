@@ -39,11 +39,11 @@ namespace Cascade.Booking.Models
         public GuestCategory Category { get; set; }
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
-        public IEnumerable<Day> Days { get; set;}
+        public IEnumerable<Day> Days { get; set; }
         public Decimal CostPerNight { get; set; }
         public Decimal? TotalCost
         {
-            get { return Days.Sum(d=>d.Cost); }
+            get { return Days.Sum(d => d.Cost); }
         }
 
         public int? NumberOfNights
@@ -51,13 +51,17 @@ namespace Cascade.Booking.Models
             get
             {
                 int? nights = null;
-                try
-                {
-                    var duration = (To - From);
-                    if (duration.HasValue)
-                        nights = duration.Value.Days;
-                }
-                catch { }
+
+                if (!To.HasValue || !From.HasValue)
+                    return nights;
+
+                var from = From.Value;
+                // To times are up to the last second in the day (23:59:59)
+                // From times are from the first second in the day
+                // so compensate...
+                var to = To.Value.AddSeconds(1);
+                var duration = (to - from);
+                nights = duration.Days;
                 return nights;
             }
         }
@@ -77,7 +81,7 @@ namespace Cascade.Booking.Models
                         guest.CostPerNight.ToString() + FieldBreak +
                         (guest.From.HasValue ? guest.From.Value.ToString("o") : "") + FieldBreak +
                         (guest.To.HasValue ? guest.To.Value.ToString("o") : "") + FieldBreak +
-                        Base64Encode(Day.Serialize(guest.Days) ) + 
+                        Base64Encode(Day.Serialize(guest.Days)) +
                         RecordBreak;
                 }
             }
@@ -102,7 +106,7 @@ namespace Cascade.Booking.Models
                         decodedDays = fields[7];
 
                     DateTime from = new DateTime();
-                    DateTime.TryParseExact(fields[5], "o", CultureInfo.CurrentCulture, DateTimeStyles.RoundtripKind, out from );
+                    DateTime.TryParseExact(fields[5], "o", CultureInfo.CurrentCulture, DateTimeStyles.RoundtripKind, out from);
                     DateTime to = new DateTime();
                     DateTime.TryParseExact(fields[6], "o", CultureInfo.CurrentCulture, DateTimeStyles.RoundtripKind, out to);
 

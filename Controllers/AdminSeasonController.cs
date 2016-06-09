@@ -6,6 +6,7 @@ using Orchard.ContentManagement;
 using Orchard.Core.Common.ViewModels;
 using Orchard.DisplayManagement;
 using Orchard.Localization;
+using Orchard.Localization.Models;
 using Orchard.Localization.Services;
 using Orchard.Logging;
 using Orchard.Settings;
@@ -203,11 +204,19 @@ namespace Cascade.Booking.Controllers
         {
             if (ModelState.IsValid)
             {
+                // these are not in the form and do not need to be
+                // but they might be needed for the converter
+                seasonDetailsVm.From.ShowDate = true;
+                seasonDetailsVm.To.ShowDate = true;
                 try
                 {
-                    var from = dls.ConvertFromLocalizedString(seasonDetailsVm.From.Date).Value;
-                    var to = dls.ConvertFromLocalizedString(seasonDetailsVm.To.Date).Value;
+                    var from = dls.ConvertFromLocalizedString(seasonDetailsVm.From.Date + " 00:00:00").Value;
+                    
+                    // To end of day
+                    var to = dls.ConvertFromLocalizedString(seasonDetailsVm.To.Date + " 23:59:59").Value;
+
                     var seasonPart = bs.GetSeason(seasonDetailsVm.Id) ?? cm.Create<SeasonPart>("Season");
+
                     seasonPart.Title = seasonDetailsVm.Title;
                     seasonPart.From = from;
                     seasonPart.To = to;

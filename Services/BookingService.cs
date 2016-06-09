@@ -121,7 +121,7 @@ namespace Cascade.Booking.Services
             if (date == null)
                 return null;
             var seasons = GetAllSeasons();
-            return seasons.FirstOrDefault(s => s.From <= date && date <= s.To);
+            return seasons.FirstOrDefault(s => s.From <= date && date <= s.To );
         }
 
         public Decimal GetRate(DateTime date)
@@ -295,7 +295,7 @@ namespace Cascade.Booking.Services
                 FirstName = guest.FirstName,
                 Category = guest.Category,
                 From = dls.ConvertFromLocalizedDateString(guest.From.Date),
-                To = dls.ConvertFromLocalizedDateString(guest.To.Date),
+                To = dls.ConvertFromLocalizedString(guest.To.Date + " 09:59:59"),
                 CostPerNight = guest.CostPerNight,
                 Days = days
             };
@@ -305,7 +305,7 @@ namespace Cascade.Booking.Services
         public bool AreGuestDatesOutOfRange(BookingDetailsViewModel bookingVm)
         {
             var from = bookingVm.Guests.Min(a => dls.ConvertFromLocalizedDateString(a.From.Date));
-            var to = bookingVm.Guests.Max(a => dls.ConvertFromLocalizedDateString(a.To.Date));
+            var to = bookingVm.Guests.Max(a => dls.ConvertFromLocalizedString(a.To.Date + " 09:59:59"));
             var seasons = GetAllSeasons().ToList();
             if (from < seasons.Min(s => s.From) || to > seasons.Max(s => s.To))
                 return true;
